@@ -11,18 +11,19 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public')); // Frontend files
+app.use(express.static('public'));
 
 // --- MongoDB Connection ---
 const MONGO_URI = process.env.MONGO_URI;
-if (!MONGO_URI) {
-    console.error("Error: MONGO_URI not found in environment variables.");
-    process.exit(1);
-}
 
-mongoose.connect(MONGO_URI)
-    .then(() => console.log('MongoDB Connected Successfully!'))
-    .catch(err => console.error('MongoDB Connection Error:', err));
+// ডাটাবেস কানেকশন (এখানে process.exit বাদ দেওয়া হয়েছে যাতে সার্ভার বন্ধ না হয়)
+if (MONGO_URI) {
+    mongoose.connect(MONGO_URI)
+        .then(() => console.log('MongoDB Connected Successfully!'))
+        .catch(err => console.error('MongoDB Connection Error:', err));
+} else {
+    console.warn("WARNING: MONGO_URI not found in environment variables. Database will not work.");
+}
 
 // --- Helper: Year Extraction ---
 function getYearSafe(dateVal) {
@@ -30,10 +31,7 @@ function getYearSafe(dateVal) {
     try {
         const d = new Date(dateVal);
         if (isNaN(d.getTime())) return "";
-        // Asia/Dhaka timezone offset adjustment approx +6 hours
-        const offset = 6 * 60 * 60 * 1000; 
-        const localDate = new Date(d.getTime() + offset);
-        return localDate.getFullYear().toString();
+        return d.getFullYear().toString();
     } catch (e) { return ""; }
 }
 
@@ -42,8 +40,6 @@ function getYearSafe(dateVal) {
 // 1. Login
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
-    // Render Environment Variables থেকে ইউজারনেম পাসওয়ার্ড চেক করা হচ্ছে
-    // ডিফল্ট ভ্যালু দেওয়া আছে যদি Env সেট না করা থাকে
     const validUser = process.env.ADMIN_USER || 'mehedi4894';
     const validPass = process.env.ADMIN_PASS || 'Mehedi@01747527352';
 
@@ -78,20 +74,16 @@ app.post('/api/saveFormData', async (req, res) => {
     }
 });
 
-// 3. Get Initial Data (Profiles & Search Options)
+// 3. Get Initial Data
 app.get('/api/getInitData', async (req, res) => {
     try {
-        // ১. প্রোফাইল ডাটা নিয়ে আসা
         const profiles = await Profile.find({}).lean();
-
-        // ২. ডাটাবেস থেকে ইউনিক নাম, জমি ও বছর বের করা (Aggregation)
         const landStats = await LandData.aggregate([
             {
                 $group: {
                     _id: "$name",
                     lands: { $addToSet: "$land" },
-                    years: { $addToSet: { $dateToString: { format: "%Y", date: "$date" } } },
-                    docs: { $push: "$$ROOT" } 
+                    years: { $addToSet: { $dateToString: { format: "%Y", date: "$date" } } }
                 }
             }
         ]);
@@ -101,16 +93,12 @@ app.get('/api/getInitData', async (req, res) => {
         const landMap = {};
         const yearMap = {};
 
-        // প্রতিটি গ্রুপ থেকে ডাটা সাজানো
         landStats.forEach(group => {
             const name = group._id;
             if (name) {
                 namesFromData.add(name);
-                
                 if (!landMap[name]) landMap[name] = new Set();
                 group.lands.forEach(l => landMap[name].add(l));
-                
-                // বছর বের করা (HariYear ফিল্ড থেকেও নেওয়া যেতে পারে, এখানে Date থেকে নেওয়া হলো)
                 if (!yearMap[name]) yearMap[name] = new Set();
                 group.years.forEach(y => {
                      if(y) {
@@ -121,10 +109,8 @@ app.get('/api/getInitData', async (req, res) => {
             }
         });
 
-        // Set কে Array তে রূপান্তর এবং সর্ট করা
         const finalLandMap = {};
         for (let key in landMap) finalLandMap[key] = Array.from(landMap[key]).sort((a, b) => a - b);
-
         const finalYearMap = {};
         for (let key in yearMap) finalYearMap[key] = Array.from(yearMap[key]).sort((a,b) => b-a);
 
@@ -147,14 +133,11 @@ app.get('/api/getInitData', async (req, res) => {
 // 4. Get Report Data
 app.post('/api/getReportData', async (req, res) => {
     const searchData = req.body;
-    
-    // Query Builder
     let query = {};
     
     if (searchData.name && searchData.name !== "ALL") query.name = searchData.name;
     if (searchData.land && searchData.land !== "ALL") query.land = parseFloat(searchData.land);
     
-    // Year Filtering
     if (searchData.year && searchData.year !== "ALL") {
         const year = parseInt(searchData.year);
         const start = new Date(`${year}-01-01T00:00:00.000Z`);
@@ -164,7 +147,6 @@ app.post('/api/getReportData', async (req, res) => {
 
     try {
         const records = await LandData.find(query).sort({ date: -1 }).lean();
-        
         const formattedRecords = records.map(row => ({
             date: new Date(row.date).toLocaleDateString('en-GB'),
             year: getYearSafe(row.date),
@@ -176,7 +158,6 @@ app.post('/api/getReportData', async (req, res) => {
             hariYear: row.hariYear || "",
             entryBy: row.entryBy
         }));
-
         res.json({ success: true, records: formattedRecords });
     } catch (error) {
         res.json({ success: false, records: [] });
@@ -189,17 +170,11 @@ app.post('/api/deleteRecords', async (req, res) => {
     if (data.name === "ALL" || data.year === "ALL") {
         return res.json({ success: false, message: "Select specific name and year." });
     }
-
     try {
         const year = parseInt(data.year);
         const start = new Date(`${year}-01-01T00:00:00.000Z`);
         const end = new Date(`${year + 1}-01-01T00:00:00.000Z`);
-
-        const result = await LandData.deleteMany({ 
-            name: data.name, 
-            date: { $gte: start, $lt: end } 
-        });
-
+        const result = await LandData.deleteMany({ name: data.name, date: { $gte: start, $lt: end } });
         res.json({ success: true, message: result.deletedCount + " records deleted." });
     } catch (e) {
         res.json({ success: false, message: e.toString() });
@@ -207,58 +182,44 @@ app.post('/api/deleteRecords', async (req, res) => {
 });
 
 // --- PROFILE MANAGEMENT ---
-
 app.post('/api/saveProfile', async (req, res) => {
     const data = req.body;
     try {
-        // সব গুলো স্ট্রিং থেকে নাম্বারে কনভার্ট করা হচ্ছে
         const landVal = parseFloat(data.land);
         const rateVal = parseFloat(data.rate);
         const oldLandVal = parseFloat(data.oldLand);
         const oldRateVal = parseFloat(data.oldRate);
 
-        // যদি পুরাতন নাম থাকে (অর্থাৎ এডিট করা হচ্ছে)
         if (data.oldName && data.oldName !== "") {
             await Profile.findOneAndUpdate(
                 { name: data.oldName, land: oldLandVal, rate: oldRateVal },
                 { name: data.name, land: landVal, rate: rateVal, hariBorsho: data.hariBorsho }
             );
         } else {
-            // নতুন প্রোফাইল তৈরির আগে চেক করা হচ্ছে এটি আগে থেকে আছে কিনা
             const existing = await Profile.findOne({ name: data.name, land: landVal });
             if (existing) {
-                // যদি থাকে তবে আপডেট করে দিবে
-                await Profile.findOneAndUpdate(
-                    { _id: existing._id },
-                    { rate: rateVal, hariBorsho: data.hariBorsho }
-                );
+                await Profile.findOneAndUpdate({ _id: existing._id }, { rate: rateVal, hariBorsho: data.hariBorsho });
             } else {
-                // নতুন প্রোফাইল তৈরি
-                const newProfile = new Profile({
-                    name: data.name,
-                    land: landVal,
-                    rate: rateVal,
-                    hariBorsho: data.hariBorsho
-                });
+                const newProfile = new Profile({ name: data.name, land: landVal, rate: rateVal, hariBorsho: data.hariBorsho });
                 await newProfile.save();
             }
         }
         res.json({ success: true });
     } catch (e) {
-        console.error("Save Profile Error:", e);
         res.json({ success: false, message: e.toString() });
     }
 });
 
 app.post('/api/deleteProfile', async (req, res) => {
     try {
-        await Profile.findOneAndDelete({ 
-            name: req.body.name, 
-            land: parseFloat(req.body.land), 
-            rate: parseFloat(req.body.rate) 
-        });
+        await Profile.findOneAndDelete({ name: req.body.name, land: parseFloat(req.body.land), rate: parseFloat(req.body.rate) });
         res.json({ success: true });
     } catch (e) {
         res.json({ success: false });
     }
+});
+
+// Start Server (এটি সব শেষে থাকবে)
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
