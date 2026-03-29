@@ -211,25 +211,41 @@ app.post('/api/deleteRecords', async (req, res) => {
 app.post('/api/saveProfile', async (req, res) => {
     const data = req.body;
     try {
-        // যদি পুরাতন নাম থাকে তবে আপডেট করা
-        if (data.oldName) {
+        // সব গুলো স্ট্রিং থেকে নাম্বারে কনভার্ট করা হচ্ছে
+        const landVal = parseFloat(data.land);
+        const rateVal = parseFloat(data.rate);
+        const oldLandVal = parseFloat(data.oldLand);
+        const oldRateVal = parseFloat(data.oldRate);
+
+        // যদি পুরাতন নাম থাকে (অর্থাৎ এডিট করা হচ্ছে)
+        if (data.oldName && data.oldName !== "") {
             await Profile.findOneAndUpdate(
-                { name: data.oldName, land: data.oldLand, rate: data.oldRate },
-                { name: data.name, land: data.land, rate: data.rate, hariBorsho: data.hariBorsho },
-                { upsert: true }
+                { name: data.oldName, land: oldLandVal, rate: oldRateVal },
+                { name: data.name, land: landVal, rate: rateVal, hariBorsho: data.hariBorsho }
             );
         } else {
-            // নতুন প্রোফাইল তৈরি
-            const newProfile = new Profile({
-                name: data.name,
-                land: data.land,
-                rate: data.rate,
-                hariBorsho: data.hariBorsho
-            });
-            await newProfile.save();
+            // নতুন প্রোফাইল তৈরির আগে চেক করা হচ্ছে এটি আগে থেকে আছে কিনা
+            const existing = await Profile.findOne({ name: data.name, land: landVal });
+            if (existing) {
+                // যদি থাকে তবে আপডেট করে দিবে
+                await Profile.findOneAndUpdate(
+                    { _id: existing._id },
+                    { rate: rateVal, hariBorsho: data.hariBorsho }
+                );
+            } else {
+                // নতুন প্রোফাইল তৈরি
+                const newProfile = new Profile({
+                    name: data.name,
+                    land: landVal,
+                    rate: rateVal,
+                    hariBorsho: data.hariBorsho
+                });
+                await newProfile.save();
+            }
         }
         res.json({ success: true });
     } catch (e) {
+        console.error("Save Profile Error:", e);
         res.json({ success: false, message: e.toString() });
     }
 });
@@ -238,16 +254,11 @@ app.post('/api/deleteProfile', async (req, res) => {
     try {
         await Profile.findOneAndDelete({ 
             name: req.body.name, 
-            land: req.body.land, 
-            rate: req.body.rate 
+            land: parseFloat(req.body.land), 
+            rate: parseFloat(req.body.rate) 
         });
         res.json({ success: true });
     } catch (e) {
         res.json({ success: false });
     }
-});
-
-// Start Server
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
 });
