@@ -7,9 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            theme: { extend: { colors: { primary: '#1e3a5f', accent: '#0ea5e9' } } }
-        }
+        tailwind.config = { theme: { extend: { colors: { primary: '#1e3a5f', accent: '#0ea5e9' } } } }
     </script>
     <style>
         * { font-family: 'Inter', sans-serif; }
@@ -22,27 +20,13 @@
         .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
         .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
         .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
-        
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 15px; }
-        
-        .dropdown-list { 
-            position: absolute; 
-            top: 100%; left: 0; right: 0; 
-            background: white; border: 2px solid #0ea5e9; 
-            max-height: 200px; overflow-y: auto; 
-            z-index: 50; 
-            border-radius: 0 0 8px 8px; 
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
-        
-        .person-block { border-left: 4px solid #1e3a5f; padding-left: 15px; margin-bottom: 20px; }
-        .person-name-header { font-size: 1.1rem; font-weight: 800; color: #1e3a5f; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
-        .status-line { margin-bottom: 4px; font-size: 0.95rem; }
+        .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #0ea5e9; max-height: 200px; overflow-y: auto; z-index: 50; border-radius: 0 0 8px 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
     </style>
 </head>
 <body class="p-2 sm:p-4 md:p-6">
 
-    <!-- LOGIN SECTION -->
+    <!-- LOGIN -->
     <div id="loginSection" class="max-w-md mx-auto">
         <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 text-center">
             <h2 class="text-2xl font-bold text-primary mb-6">Login</h2>
@@ -55,92 +39,81 @@
         </div>
     </div>
 
-    <!-- MAIN APP SECTION -->
+    <!-- APP -->
     <div id="appSection" class="hidden max-w-5xl mx-auto">
-        
-        <!-- Header -->
-        <div class="bg-primary rounded-t-2xl p-4 text-white flex flex-col sm:flex-row justify-between items-center gap-3">
-            <div class="text-center sm:text-left">
+        <div class="bg-primary rounded-t-2xl p-4 text-white flex justify-between items-center">
+            <div>
                 <h1 class="text-xl font-bold">ভূমি লিজ ব্যবস্থাপনা</h1>
-                <p class="text-sm font-semibold text-blue-200">মো: মেহেদী হাসান</p>
+                <p class="text-sm text-blue-200">মো: মেহেদী হাসান</p>
             </div>
             <div class="flex gap-2">
-                <button onclick="toggleLanguage()" id="langToggleBtn" class="btn bg-yellow-500 text-black px-4 py-2 rounded-lg text-sm font-bold">EN</button>
-                <button onclick="openSettingsModal()" class="btn bg-white text-primary px-4 py-2 rounded-lg text-sm font-bold">Settings</button>
-                <button onclick="logout()" class="btn bg-red-500/80 px-4 py-2 rounded-lg text-sm">Logout</button>
+                <button onclick="toggleLang()" id="langBtn" class="btn bg-yellow-500 text-black px-3 py-2 rounded-lg text-sm font-bold">EN</button>
+                <button onclick="openSettings()" class="btn bg-white text-primary px-3 py-2 rounded-lg text-sm font-bold">Settings</button>
+                <button onclick="logout()" class="btn bg-red-500/80 px-3 py-2 rounded-lg text-sm">Logout</button>
             </div>
         </div>
         
         <div class="bg-white rounded-b-2xl shadow-xl p-4 sm:p-6">
-            
-            <!-- ENTRY FORM -->
-            <div class="border-b pb-6 mb-6">
-                <h3 class="text-lg font-bold text-primary mb-4">New Entry</h3>
-                <form id="landForm">
-                    <div class="grid grid-cols-2 md:grid-cols-8 gap-4 items-end">
-                        
-                        <div class="relative col-span-2">
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">নাম</label>
-                            <input type="text" id="newEntryNameInput" placeholder="Type or Select" class="input-field w-full px-3 py-2 rounded-lg text-sm bg-white" autocomplete="off" required>
-                            <div id="newEntryNameDropdown" class="hidden dropdown-list"></div>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">জমি</label>
-                            <select id="land" required onchange="updateDetailsByLand()" class="input-field w-full px-3 py-2 rounded-lg bg-white"><option value="">Select</option></select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">হারি গণনা</label>
-                            <input type="text" id="hariBorshoDisplay" readonly class="input-field w-full px-3 py-2 rounded-lg bg-gray-100">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">হারি রেট</label>
-                            <select id="rate" required class="input-field w-full px-3 py-2 rounded-lg bg-white"><option value="">Select</option></select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">টাকা</label>
-                            <input type="number" id="tkGiven" class="input-field w-full px-3 py-2 rounded-lg">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">লিজ বর্ষ</label>
-                            <input type="text" id="hariYear" class="input-field w-full px-3 py-2 rounded-lg bg-white">
-                        </div>
-                        <div>
-                            <button type="submit" class="btn btn-primary w-full py-2.5 rounded-lg font-semibold text-sm">Save</button>
-                        </div>
+            <!-- Entry Form -->
+            <div class="border-b pb-4 mb-4">
+                <h3 class="font-bold text-primary mb-3">New Entry</h3>
+                <form id="landForm" class="grid grid-cols-2 md:grid-cols-8 gap-3 items-end">
+                    <div class="relative col-span-2">
+                        <label class="text-xs font-semibold text-gray-600">নাম</label>
+                        <input type="text" id="entryName" class="input-field w-full px-3 py-2 rounded-lg bg-white" autocomplete="off" required>
+                        <div id="nameDD" class="hidden dropdown-list"></div>
                     </div>
-                    <div id="successMsg" class="hidden mt-3 text-green-600 text-sm text-center font-semibold">Saved!</div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-600">জমি</label>
+                        <select id="entryLand" class="input-field w-full px-3 py-2 rounded-lg bg-white" required onchange="updateRate()"><option value="">Select</option></select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-600">হারি গণনা</label>
+                        <input type="text" id="entryHari" class="input-field w-full px-3 py-2 rounded-lg bg-gray-100" readonly>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-600">রেট</label>
+                        <select id="entryRate" class="input-field w-full px-3 py-2 rounded-lg bg-white" required><option value="">Select</option></select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-600">টাকা</label>
+                        <input type="number" id="entryTk" class="input-field w-full px-3 py-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-600">বছর</label>
+                        <input type="text" id="entryYear" class="input-field w-full px-3 py-2 rounded-lg bg-white">
+                    </div>
+                    <div><button class="btn btn-primary w-full py-2 rounded-lg font-semibold">Save</button></div>
                 </form>
+                <div id="msg" class="hidden text-green-600 text-center text-sm mt-2 font-semibold">Saved!</div>
             </div>
 
-            <!-- SEARCH -->
+            <!-- Search -->
             <div>
-                <h3 class="text-lg font-bold text-primary mb-4">Search</h3>
+                <h3 class="font-bold text-primary mb-3">Search</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3">
                     <div class="relative">
-                        <input type="text" id="searchNameInput" placeholder="Name" class="input-field w-full px-3 py-2 rounded-lg bg-white" autocomplete="off">
-                        <input type="hidden" id="searchName" value="ALL">
-                        <div id="nameDropdown" class="hidden dropdown-list"></div>
+                        <input type="text" id="searchName" placeholder="Name" class="input-field w-full px-3 py-2 rounded-lg bg-white" autocomplete="off">
+                        <input type="hidden" id="searchNameVal" value="ALL">
+                        <div id="searchDD" class="hidden dropdown-list"></div>
                     </div>
                     <select id="searchLand" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL">All Lands</option></select>
                     <select id="searchYear" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL">All Years</option></select>
                     <div class="flex gap-2">
-                        <button onclick="searchStatus()" class="btn btn-success px-4 rounded-lg flex-1">Status</button>
-                        <button onclick="viewDatabase()" class="btn bg-purple-600 px-4 rounded-lg flex-1">Data</button>
-                        <button onclick="deleteRecordsAction()" class="btn btn-danger px-4 rounded-lg">Del</button>
+                        <button onclick="getDue()" class="btn btn-success px-3 rounded-lg flex-1">Due</button>
+                        <button onclick="getData()" class="btn bg-purple-600 px-3 rounded-lg flex-1">Data</button>
+                        <button onclick="delData()" class="btn btn-danger px-3 rounded-lg">Del</button>
                     </div>
                 </div>
-
-                <!-- Result -->
                 <div id="resultArea" class="hidden mt-4">
-                    <div id="statusCard" class="hidden mb-4 p-4 bg-blue-50 border rounded-xl"></div>
-                    <div id="databaseCard" class="hidden overflow-x-auto border rounded-lg">
+                    <div id="statusCard" class="hidden p-4 bg-blue-50 border rounded-xl"></div>
+                    <div id="dataCard" class="hidden overflow-x-auto border rounded-lg">
                         <table class="w-full text-xs border-collapse">
                             <thead class="bg-gray-100"><tr>
                                 <th class="p-2 border">Date</th><th class="p-2 border">Name</th><th class="p-2 border">Land</th>
                                 <th class="p-2 border">Rate</th><th class="p-2 border">Total</th><th class="p-2 border">Given</th><th class="p-2 border">Year</th>
                             </tr></thead>
-                            <tbody id="tableBody"></tbody>
+                            <tbody id="tBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -148,28 +121,25 @@
         </div>
     </div>
 
-    <!-- SETTINGS MODAL -->
+    <!-- Settings Modal -->
     <div id="settingsModal" class="hidden modal-overlay">
         <div class="bg-white rounded-2xl w-full max-w-3xl m-4 max-h-[90vh] flex flex-col">
             <div class="p-4 border-b bg-primary text-white rounded-t-2xl flex justify-between">
                 <h3 class="font-bold">Settings: Profiles</h3>
-                <button onclick="closeSettingsModal()" class="text-white text-2xl">&times;</button>
+                <button onclick="closeSettings()" class="text-white text-2xl">&times;</button>
             </div>
             <div class="p-6 overflow-y-auto">
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                    <input type="text" id="editName" placeholder="Name" class="input-field px-3 py-2 rounded-lg">
-                    <input type="number" id="editLand" placeholder="Land" class="input-field px-3 py-2 rounded-lg">
-                    <input type="text" id="editHariBorsho" placeholder="Hari Start" class="input-field px-3 py-2 rounded-lg">
-                    <input type="number" id="editRate" placeholder="Rate" class="input-field px-3 py-2 rounded-lg">
-                    <!-- Hidden Fields for Logic -->
-                    <input type="hidden" id="oldName">
-                    <input type="hidden" id="oldLand">
-                    <input type="hidden" id="oldRate">
-                    <input type="hidden" id="oldHariBorsho">
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                    <input type="text" id="sName" placeholder="Name" class="input-field px-3 py-2 rounded-lg">
+                    <input type="number" id="sLand" placeholder="Land" class="input-field px-3 py-2 rounded-lg">
+                    <input type="text" id="sHari" placeholder="Hari Start" class="input-field px-3 py-2 rounded-lg">
+                    <input type="number" id="sRate" placeholder="Rate" class="input-field px-3 py-2 rounded-lg">
+                    <!-- Hidden for Edit Logic -->
+                    <input type="hidden" id="sOldName">
+                    <input type="hidden" id="sOldLand">
+                    <input type="hidden" id="sOldRate">
                     
-                    <div class="flex gap-2">
-                        <button onclick="saveProfileAction()" class="btn btn-primary px-4 rounded-lg flex-1">Save</button>
-                    </div>
+                    <button onclick="saveProfile()" class="btn btn-primary px-4 rounded-lg col-span-2 md:col-span-1">Save</button>
                 </div>
                 <h4 class="font-bold text-gray-700 mb-2">Saved Profiles</h4>
                 <div class="overflow-x-auto border rounded-lg">
@@ -178,7 +148,7 @@
                             <th class="p-2 border text-left">Name</th><th class="p-2 border">Land</th>
                             <th class="p-2 border">Start</th><th class="p-2 border">Rate</th><th class="p-2 border">Action</th>
                         </tr></thead>
-                        <tbody id="settingsTableBody"></tbody>
+                        <tbody id="sTable"></tbody>
                     </table>
                 </div>
             </div>
@@ -186,331 +156,199 @@
     </div>
 
     <script>
-        // --- APP LOGIC ---
-        let currentLang = 'bn';
-        let currentUser = null;
-        let userProfiles = []; 
-        let allSearchNames = [];
-        let searchLandMap = {};
-        let searchYearMap = {}; 
+        let user = null, profiles = [], sMap = {}, yMap = {}, names = [];
+        
+        // Helper
+        const api = (url, data = {}) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(r => r.json());
 
-        // --- API HELPER ---
-        async function apiCall(url, data = {}) {
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                return await response.json();
-            } catch (error) {
-                console.error("API Error:", error);
-                return { success: false, message: "Server Connection Error" };
-            }
-        }
-
-        // --- LOGIN ---
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async e => {
             e.preventDefault();
-            const res = await apiCall('/api/login', {
-                username: document.getElementById('username').value,
-                password: document.getElementById('password').value
-            });
-            
+            const res = await api('/api/login', { username: document.getElementById('username').value, password: document.getElementById('password').value });
             if (res.success) {
-                currentUser = res.user;
-                localStorage.setItem('landSession', JSON.stringify({ user: res.user.name }));
+                user = res.user;
+                localStorage.setItem('s', JSON.stringify({ u: user.name }));
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('appSection').classList.remove('hidden');
-                loadInitialData();
+                init();
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
                 document.getElementById('loginError').innerText = res.message;
             }
         });
+        
+        const logout = () => { localStorage.removeItem('s'); location.reload(); };
+        const toggleLang = () => { document.getElementById('langBtn').innerText = document.getElementById('langBtn').innerText === 'EN' ? 'বাং' : 'EN'; };
 
-        function logout() {
-            localStorage.removeItem('landSession');
-            document.getElementById('appSection').classList.add('hidden');
-            document.getElementById('loginSection').classList.remove('hidden');
+        // Load Data
+        async function init() {
+            const d = await api('/api/getInitData');
+            profiles = d.profiles || [];
+            const opt = d.searchOptions || {};
+            names = opt.names || [];
+            sMap = opt.landMap || {};
+            yMap = opt.yearMap || {};
+            
+            // Populate Entry Dropdown
+            const ndd = document.getElementById('nameDD');
+            ndd.innerHTML = '';
+            [...new Set(profiles.map(p => p.name))].forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
+            
+            // Populate Search Dropdown
+            const sdd = document.getElementById('searchDD');
+            sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`;
+            names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
+
+            // Update Settings Table if open
+            if (!document.getElementById('settingsModal').classList.contains('hidden')) renderS_tbl();
         }
 
-        // --- INIT DATA (Core Logic) ---
-        async function loadInitialData() {
-            const data = await apiCall('/api/getInitData');
-            
-            // ১. গ্লোবাল প্রোফাইল ভ্যারিয়েবল আপডেট
-            userProfiles = data.profiles || [];
-            
-            // ২. নতুন এন্ট্রি ফর্মের ড্রপডাউন আপডেট
-            populateFormNames(userProfiles);
-            
-            // ৩. সার্চ অপশন আপডেট
-            const options = data.searchOptions || {};
-            allSearchNames = options.names || []; 
-            searchLandMap = options.landMap || {};
-            searchYearMap = options.yearMap || {};
-            populateNameDropdown(allSearchNames);
-            
-            // ৪. সেটিংস মোডাল খোলা থাকলে টেবিল আপডেট করা (এটি মূল সমাধান)
-            const modal = document.getElementById('settingsModal');
-            if (modal && !modal.classList.contains('hidden')) {
-                renderSettingsTable(userProfiles);
+        // --- Entry Logic ---
+        const setEntryName = n => {
+            document.getElementById('entryName').value = n;
+            document.getElementById('nameDD').classList.add('hidden');
+            const m = profiles.filter(p => p.name === n);
+            const lSel = document.getElementById('entryLand');
+            lSel.innerHTML = '<option value="">Select</option>';
+            m.forEach(p => lSel.innerHTML += `<option value="${p.land}">${p.land}</option>`);
+            if (m.length === 1) { lSel.value = m[0].land; updateRate(); }
+        };
+        
+        const updateRate = () => {
+            const n = document.getElementById('entryName').value, l = document.getElementById('entryLand').value;
+            const p = profiles.find(x => x.name === n && x.land == l);
+            if (p) {
+                document.getElementById('entryRate').innerHTML = `<option value="${p.rate}">${p.rate}</option>`;
+                document.getElementById('entryRate').value = p.rate;
+                document.getElementById('entryHari').value = p.hariBorsho || "-";
             }
-        }
+        };
 
-        // --- NEW ENTRY LOGIC ---
-        function populateFormNames(profiles) {
-            const distinctNames = [...new Set(profiles.map(p => p.name))];
-            const dropdown = document.getElementById('newEntryNameDropdown');
-            dropdown.innerHTML = '';
-            if(distinctNames.length === 0) dropdown.innerHTML = `<div class="p-2 text-gray-400 italic">No Profiles</div>`;
-            distinctNames.forEach(n => {
-                dropdown.innerHTML += `<div class="p-2 cursor-pointer hover:bg-gray-100 border-b" onclick="selectNewEntryName('${n}')">${n}</div>`;
-            });
-        }
-
-        function selectNewEntryName(name) {
-            document.getElementById('newEntryNameInput').value = name;
-            document.getElementById('newEntryNameDropdown').classList.add('hidden');
-            updateLandRateDropdowns(name);
-        }
-
-        function updateLandRateDropdowns(name) {
-            const matches = userProfiles.filter(p => p.name === name);
-            const landSelect = document.getElementById('land');
-            landSelect.innerHTML = `<option value="">Select</option>`;
-            document.getElementById('rate').innerHTML = `<option value="">Select</option>`;
-            document.getElementById('hariBorshoDisplay').value = "";
-            
-            if (matches.length > 0) {
-                matches.forEach(p => landSelect.innerHTML += `<option value="${p.land}">${p.land}</option>`);
-                if (matches.length === 1) {
-                    landSelect.value = matches[0].land;
-                    document.getElementById('rate').innerHTML = `<option value="${matches[0].rate}">${matches[0].rate}</option>`;
-                    document.getElementById('rate').value = matches[0].rate;
-                    document.getElementById('hariBorshoDisplay').value = matches[0].hariBorsho || "-";
-                }
-            }
-        }
-
-        function updateDetailsByLand() {
-            const name = document.getElementById('newEntryNameInput').value;
-            const land = document.getElementById('land').value;
-            if (!name || !land) return;
-            const profile = userProfiles.find(p => p.name === name && p.land == land);
-            if (profile) {
-                document.getElementById('rate').innerHTML = `<option value="${profile.rate}">${profile.rate}</option>`;
-                document.getElementById('rate').value = profile.rate;
-                document.getElementById('hariBorshoDisplay').value = profile.hariBorsho || "-";
-            }
-        }
-
-        // --- SAVE FORM ---
-        document.getElementById('landForm').addEventListener('submit', async function(e) {
+        document.getElementById('landForm').addEventListener('submit', async e => {
             e.preventDefault();
-            const name = document.getElementById('newEntryNameInput').value;
-            const land = document.getElementById('land').value;
-            const rate = document.getElementById('rate').value;
-            
-            if (!name || !land || !rate) return alert("Fill all fields");
-
-            const formData = {
-                name, land, rate,
-                tkGiven: document.getElementById('tkGiven').value || 0,
-                hariYear: document.getElementById('hariYear').value,
-                loggedInUser: currentUser.name
+            const d = {
+                name: document.getElementById('entryName').value, land: document.getElementById('entryLand').value,
+                rate: document.getElementById('entryRate').value, tkGiven: document.getElementById('entryTk').value,
+                hariYear: document.getElementById('entryYear').value, loggedInUser: user.name
             };
-
-            const res = await apiCall('/api/saveFormData', formData);
-            if(res.success) {
-                document.getElementById('successMsg').classList.remove('hidden');
-                this.reset();
-                document.getElementById('newEntryNameInput').value = ''; 
-                setTimeout(() => document.getElementById('successMsg').classList.add('hidden'), 2000);
-                loadInitialData();
-            } else { alert("Error saving"); }
+            if (!d.name || !d.land || !d.rate) return alert("Fill fields");
+            const res = await api('/api/saveFormData', d);
+            if (res.success) {
+                document.getElementById('msg').classList.remove('hidden');
+                e.target.reset();
+                setTimeout(() => document.getElementById('msg').classList.add('hidden'), 1500);
+                init();
+            } else alert("Error");
         });
 
-        // --- SEARCH LOGIC ---
-        function populateNameDropdown(names) {
-            const dropdown = document.getElementById('nameDropdown');
-            dropdown.innerHTML = `<div class="p-2 cursor-pointer hover:bg-gray-100 font-bold text-blue-600" onclick="selectSearchName('ALL', 'All Names')">All Names</div>`;
-            names.forEach(n => dropdown.innerHTML += `<div class="p-2 cursor-pointer hover:bg-gray-100" onclick="selectSearchName('${n}', '${n}')">${n}</div>`);
-        }
-        
-        function selectSearchName(val, txt) {
-            document.getElementById('searchName').value = val;
-            document.getElementById('searchNameInput').value = txt;
-            document.getElementById('nameDropdown').classList.add('hidden');
+        // --- Search Logic ---
+        const setSearchName = (v, t) => {
+            document.getElementById('searchNameVal').value = v;
+            document.getElementById('searchName').value = t;
+            document.getElementById('searchDD').classList.add('hidden');
             
-            const landSelect = document.getElementById('searchLand');
-            landSelect.innerHTML = `<option value="ALL">All Lands</option>`;
-            if (val !== "ALL" && searchLandMap[val]) searchLandMap[val].forEach(l => landSelect.innerHTML += `<option value="${l}">${l}</option>`);
-            
-            const yearSelect = document.getElementById('searchYear');
-            yearSelect.innerHTML = `<option value="ALL">All Years</option>`;
-            if (val !== "ALL" && searchYearMap[val]) searchYearMap[val].forEach(y => yearSelect.innerHTML += `<option value="${y}">${y}</option>`);
-        }
+            const lSel = document.getElementById('searchLand');
+            lSel.innerHTML = '<option value="ALL">All Lands</option>';
+            if (v !== 'ALL' && sMap[v]) sMap[v].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`);
 
-        async function searchStatus() {
-            const searchData = {
-                name: document.getElementById('searchName').value,
-                land: document.getElementById('searchLand').value,
-                year: document.getElementById('searchYear').value
-            };
-            const data = await apiCall('/api/getReportData', searchData);
+            const ySel = document.getElementById('searchYear');
+            ySel.innerHTML = '<option value="ALL">All Years</option>';
+            if (v !== 'ALL' && yMap[v]) yMap[v].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`);
+        };
+
+        const getDue = async () => {
+            const d = await api('/api/getReportData', { name: document.getElementById('searchNameVal').value, land: document.getElementById('searchLand').value, year: document.getElementById('searchYear').value });
             document.getElementById('resultArea').classList.remove('hidden');
             document.getElementById('statusCard').classList.remove('hidden');
-            document.getElementById('databaseCard').classList.add('hidden');
-            
-            if(data.records.length > 0) {
-                let html = `<div class="text-left divide-y">`;
-                const grouped = {};
-                data.records.forEach(r => {
-                    const key = r.name + "-" + (r.hariYear || r.year);
-                    if(!grouped[key]) grouped[key] = { name: r.name, year: r.hariYear || r.year, total: 0, paid: 0 };
-                    grouped[key].total += parseFloat(r.total);
-                    grouped[key].paid += parseFloat(r.given);
+            document.getElementById('dataCard').classList.add('hidden');
+            if (d.records.length > 0) {
+                let h = '<div class="text-left">';
+                const g = {};
+                d.records.forEach(r => {
+                    const k = r.name + "-" + (r.hariYear || r.year);
+                    if(!g[k]) g[k] = {n: r.name, y: r.hariYear || r.year, t:0, p:0};
+                    g[k].t += parseFloat(r.total);
+                    g[k].p += parseFloat(r.given);
                 });
-                for(let key in grouped) {
-                    const g = grouped[key];
-                    const due = g.total - g.paid;
-                    const color = due > 0 ? 'text-red-600' : 'text-green-600';
-                    html += `<div class="p-2"><b>${g.name}</b> (${g.year}) - Due: <span class="${color} font-bold">${due.toFixed(2)}</span></div>`;
-                }
-                html += `</div>`;
-                document.getElementById('statusCard').innerHTML = html;
-            } else {
-                document.getElementById('statusCard').innerHTML = "<p class='text-center p-4'>No Data</p>";
-            }
-        }
+                Object.values(g).forEach(x => {
+                    const due = x.t - x.p;
+                    if (due > 0) h += `<p class="text-red-600 font-semibold mb-1">${x.n} (${x.y}): ${due.toFixed(2)} টাকা বকেয়া</p>`;
+                });
+                h += '</div>';
+                document.getElementById('statusCard').innerHTML = h;
+            } else document.getElementById('statusCard').innerHTML = '<p class="text-center text-gray-500">No Data</p>';
+        };
 
-        async function viewDatabase() {
-             const searchData = {
-                name: document.getElementById('searchName').value,
-                land: document.getElementById('searchLand').value,
-                year: document.getElementById('searchYear').value
-            };
-            const data = await apiCall('/api/getReportData', searchData);
+        const getData = async () => {
+            const d = await api('/api/getReportData', { name: document.getElementById('searchNameVal').value, land: document.getElementById('searchLand').value, year: document.getElementById('searchYear').value });
             document.getElementById('resultArea').classList.remove('hidden');
             document.getElementById('statusCard').classList.add('hidden');
-            document.getElementById('databaseCard').classList.remove('hidden');
-            
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            data.records.forEach(r => {
-                tbody.innerHTML += `<tr class="hover:bg-gray-50">
-                    <td class="p-2 border">${r.date}</td><td class="p-2 border">${r.name}</td>
-                    <td class="p-2 border text-center">${r.land}</td><td class="p-2 border text-center">${r.rate}</td>
-                    <td class="p-2 border text-right">${r.total}</td><td class="p-2 border text-right">${r.given}</td>
-                    <td class="p-2 border text-center">${r.hariYear || r.year}</td>
-                </tr>`;
-            });
-        }
+            document.getElementById('dataCard').classList.remove('hidden');
+            const tb = document.getElementById('tBody'); tb.innerHTML = '';
+            d.records.forEach(r => tb.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 border">${r.date}</td><td class="p-2 border">${r.name}</td><td class="p-2 border text-center">${r.land}</td><td class="p-2 border text-center">${r.rate}</td><td class="p-2 border text-right">${r.total}</td><td class="p-2 border text-right">${r.given}</td><td class="p-2 border text-center">${r.hariYear || r.year}</td></tr>`);
+        };
 
-        async function deleteRecordsAction() {
-            const name = document.getElementById('searchName').value;
-            const year = document.getElementById('searchYear').value;
-            if (name === "ALL" || year === "ALL") return alert("Select specific name and year");
-            if(confirm("Delete data?")) {
-                const res = await apiCall('/api/deleteRecords', { name, year });
-                alert(res.message);
+        const delData = async () => {
+            const n = document.getElementById('searchNameVal').value, y = document.getElementById('searchYear').value;
+            if (n === 'ALL' || y === 'ALL') return alert('Select specific name/year');
+            if(confirm('Delete?')) {
+                await api('/api/deleteRecords', { name: n, year: y });
                 document.getElementById('resultArea').classList.add('hidden');
             }
-        }
+        };
 
-        // --- SETTINGS LOGIC (Fixed) ---
-        function openSettingsModal() { 
-            document.getElementById('settingsModal').classList.remove('hidden'); 
-            renderSettingsTable(userProfiles); // এখানে এসাইন করা ভ্যারিয়েবল দিয়ে টেবিল দেখাচ্ছে
-        }
-        function closeSettingsModal() { document.getElementById('settingsModal').classList.add('hidden'); }
+        // --- Settings Logic ---
+        const openSettings = () => { document.getElementById('settingsModal').classList.remove('hidden'); renderS_tbl(); };
+        const closeSettings = () => document.getElementById('settingsModal').classList.add('hidden');
         
-        function renderSettingsTable(profiles) {
-            const tbody = document.getElementById('settingsTableBody'); tbody.innerHTML = "";
-            if(profiles.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-400 p-4">No profiles found</td></tr>`;
-            } else {
-                profiles.forEach(p => {
-                    tbody.innerHTML += `<tr class="border-b hover:bg-gray-50">
-                        <td class="p-3 border font-semibold">${p.name}</td>
-                        <td class="p-3 border text-center">${p.land}</td>
-                        <td class="p-3 border text-center">${p.hariBorsho || "-"}</td>
-                        <td class="p-3 border text-center">${p.rate}</td>
-                        <td class="p-3 border text-center">
-                            <button onclick="editProfileAction('${p.name}', '${p.land}', '${p.rate}', '${p.hariBorsho || ""}')" class="btn btn-warning px-2 py-1 rounded text-xs">Edit</button>
-                            <button onclick="deleteProfileAction('${p.name}', '${p.land}', '${p.rate}')" class="btn btn-danger px-2 py-1 rounded text-xs ml-1">Del</button>
-                        </td>
-                    </tr>`;
-                });
-            }
-        }
-        
-        function editProfileAction(name, land, rate, hariBorsho) {
-            document.getElementById('editName').value = name; 
-            document.getElementById('editLand').value = land; 
-            document.getElementById('editRate').value = rate; 
-            document.getElementById('editHariBorsho').value = hariBorsho;
-            // Hidden fields
-            document.getElementById('oldName').value = name; 
-            document.getElementById('oldLand').value = land; 
-            document.getElementById('oldRate').value = rate; 
-            document.getElementById('oldHariBorsho').value = hariBorsho;
-        }
-        
-        async function saveProfileAction() {
-            const data = { 
-                name: document.getElementById('editName').value, 
-                land: document.getElementById('editLand').value, 
-                rate: document.getElementById('editRate').value, 
-                hariBorsho: document.getElementById('editHariBorsho').value, 
-                oldName: document.getElementById('oldName').value, 
-                oldLand: document.getElementById('oldLand').value, 
-                oldRate: document.getElementById('oldRate').value
+        const renderS_tbl = () => {
+            const tb = document.getElementById('sTable'); tb.innerHTML = '';
+            if (profiles.length === 0) tb.innerHTML = '<tr><td colspan="5" class="text-center text-gray-400 p-4">No Profiles</td></tr>';
+            else profiles.forEach(p => tb.innerHTML += `<tr class="border-b hover:bg-gray-50"><td class="p-3 border font-semibold">${p.name}</td><td class="p-3 border text-center">${p.land}</td><td class="p-3 border text-center">${p.hariBorsho || "-"}</td><td class="p-3 border text-center">${p.rate}</td><td class="p-3 border text-center"><button onclick="editP('${p.name}', '${p.land}', '${p.rate}', '${p.hariBorsho||''}')" class="btn btn-warning px-2 py-1 rounded text-xs">Edit</button> <button onclick="delP('${p.name}', '${p.land}', '${p.rate}')" class="btn btn-danger px-2 py-1 rounded text-xs ml-1">Del</button></td></tr>`);
+        };
+
+        const editP = (n, l, r, h) => {
+            document.getElementById('sName').value = n; document.getElementById('sLand').value = l; document.getElementById('sRate').value = r; document.getElementById('sHari').value = h;
+            document.getElementById('sOldName').value = n; document.getElementById('sOldLand').value = l; document.getElementById('sOldRate').value = r;
+        };
+
+        const saveProfile = async () => {
+            const d = {
+                name: document.getElementById('sName').value, land: document.getElementById('sLand').value, rate: document.getElementById('sRate').value, hariBorsho: document.getElementById('sHari').value,
+                oldName: document.getElementById('sOldName').value, oldLand: document.getElementById('sOldLand').value, oldRate: document.getElementById('sOldRate').value
             };
-            if(!data.name || !data.land || !data.rate) return alert("Fill Name, Land, Rate");
-            
-            const res = await apiCall('/api/saveProfile', data);
-            if(res.success) {
-                await loadInitialData(); // ডাটা লোড হওয়ার পর সেটিংস টেবিল নিজে নিজে আপডেট হবে
-                alert("Profile Saved!");
-            } else {
-                alert("Error: " + res.message);
+            if (!d.name || !d.land || !d.rate) return alert("Fill Name, Land, Rate");
+            const res = await api('/api/saveProfile', d);
+            if (res.success) {
+                await init(); // Reload data
+                document.getElementById('sName').value = ''; document.getElementById('sLand').value = ''; document.getElementById('sRate').value = ''; document.getElementById('sHari').value = '';
+                document.getElementById('sOldName').value = ''; document.getElementById('sOldLand').value = ''; document.getElementById('sOldRate').value = '';
+                alert("Saved!");
+            } else alert("Error: " + res.message);
+        };
+
+        const delP = async (n, l, r) => {
+            if(confirm('Delete Profile?')) {
+                await api('/api/deleteProfile', { name: n, land: l, rate: r });
+                await init();
             }
-        }
-        
-        async function deleteProfileAction(name, land, rate) {
-            if(confirm("Delete profile?")) {
-                await apiCall('/api/deleteProfile', { name, land, rate });
-                await loadInitialData(); // রিফ্রেশ হবে
-            }
-        }
+        };
 
-        // --- Event Listeners for Dropdowns ---
-        document.getElementById('newEntryNameInput').addEventListener('focus', function() {
-            document.getElementById('newEntryNameDropdown').classList.remove('hidden');
-        });
-        document.getElementById('searchNameInput').addEventListener('focus', function() {
-            document.getElementById('nameDropdown').classList.remove('hidden');
-        });
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('#searchNameInput')) document.getElementById('nameDropdown').classList.add('hidden');
-            if (!e.target.closest('#newEntryNameInput')) document.getElementById('newEntryNameDropdown').classList.add('hidden');
+        // Listeners
+        document.getElementById('entryName').addEventListener('focus', function() { document.getElementById('nameDD').classList.remove('hidden'); this.select(); });
+        document.getElementById('searchName').addEventListener('focus', function() { document.getElementById('searchDD').classList.remove('hidden'); this.select(); });
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#entryName') && !e.target.closest('#nameDD')) document.getElementById('nameDD').classList.add('hidden');
+            if (!e.target.closest('#searchName') && !e.target.closest('#searchDD')) document.getElementById('searchDD').classList.add('hidden');
         });
 
-        function toggleLanguage() {
-            currentLang = currentLang === 'bn' ? 'en' : 'bn';
-            document.getElementById('langToggleBtn').innerText = currentLang === 'bn' ? 'EN' : 'বাং';
-        }
-
-        // --- Check Session on Load ---
-        if(localStorage.getItem('landSession')) {
-            const session = JSON.parse(localStorage.getItem('landSession'));
-            currentUser = { name: session.user };
+        // Session Check
+        if (localStorage.getItem('s')) {
+            const s = JSON.parse(localStorage.getItem('s'));
+            user = { name: s.u };
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('appSection').classList.remove('hidden');
-            loadInitialData();
+            init();
         }
     </script>
 </body>
