@@ -304,10 +304,12 @@
             document.getElementById('password').value = '';
         }
 
-        // --- INIT DATA ---
+        // --- INIT DATA (Updated to refresh Settings Table immediately) ---
         async function loadInitialData() {
             const data = await apiCall('/api/getInitData');
             userProfiles = data.profiles || [];
+            
+            // নতুন এন্ট্রি ফর্মের ড্রপডাউন আপডেট
             populateFormNames(userProfiles);
             
             const options = data.searchOptions || {};
@@ -316,12 +318,15 @@
             allSearchNames = options.names || []; 
             searchLandMap = options.landMap || {};
             
+            // সার্চ ড্রপডাউন আপডেট
             populateNameDropdown(allSearchNames);
             const currentName = document.getElementById('searchName').value;
             if (currentName && currentName !== "ALL") updateSearchYearDropdown(currentName);
             else updateSearchYearDropdown("ALL");
             
-            if (!document.getElementById('settingsModal').classList.contains('hidden')) {
+            // সেটিংস মোডাল ওপেন থাকলে টেবিল আপডেট করা (এটি গুরুত্বপূর্ণ)
+            const settingsModal = document.getElementById('settingsModal');
+            if (settingsModal && !settingsModal.classList.contains('hidden')) {
                 renderSettingsTable(userProfiles);
             }
         }
@@ -583,7 +588,7 @@
             }
         }
 
-        // --- SETTINGS MODAL LOGIC ---
+        // --- SETTINGS MODAL LOGIC (Fixed) ---
         function openSettingsModal() { 
             document.getElementById('settingsModal').classList.remove('hidden'); 
             renderSettingsTable(userProfiles); 
@@ -596,6 +601,7 @@
         function renderSettingsTable(profiles) {
             const tbody = document.getElementById('settingsTableBody'); 
             tbody.innerHTML = "";
+            
             if(profiles.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-400 p-4">No profiles found</td></tr>`;
             } else {
@@ -622,7 +628,7 @@
             document.getElementById('editRate').value = rate; 
             document.getElementById('editHariBorsho').value = hariBorsho;
             
-            // Hidden fields set করা হচ্ছে যাতে সার্ভার বুঝতে পারে কোন ডাটা আপডেট করতে হবে
+            // Hidden fields set করা হচ্ছে
             document.getElementById('oldName').value = name; 
             document.getElementById('oldLand').value = land; 
             document.getElementById('oldRate').value = rate; 
@@ -652,22 +658,37 @@
                 oldHariBorsho: document.getElementById('oldHariBorsho').value 
             };
             
-            if(!data.name || !data.land || !data.rate) { alert("Please fill Name, Land, Rate"); return; }
+            // ভ্যালিডেশন
+            if(!data.name || !data.land || !data.rate) { 
+                alert("Please fill Name, Land, Rate"); 
+                return; 
+            }
             
+            // সেভ করার সময় বাটন ডিসেবল করা
+            const btn = document.querySelector('#settingsModal .btn-primary');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
             const res = await apiCall('/api/saveProfile', data);
             
+            btn.disabled = false;
+            btn.innerText = originalText;
+            
             if(res.success) {
-                resetSettingsForm(); 
-                loadInitialData(); 
+                resetSettingsForm();
+                // সম্পূর্ণ ডাটা আবার লোড করা হচ্ছে
+                await loadInitialData(); 
+                alert("Profile Saved Successfully!");
             } else {
-                alert("Error: " + res.message);
+                alert("Error: " + (res.message || "Could not save."));
             }
         }
         
         async function deleteProfileAction(name, land, rate) {
             if(confirm(`Delete profile of ${name}?`)) {
                 await apiCall('/api/deleteProfile', { name: name, land: land, rate: rate });
-                loadInitialData();
+                await loadInitialData();
             }
         }
 
@@ -718,7 +739,6 @@
         function toggleLanguage() {
             currentLang = currentLang === 'bn' ? 'en' : 'bn';
             document.getElementById('langToggleBtn').innerText = currentLang === 'bn' ? 'EN' : 'বাং';
-            // Basic language update can be added here if needed
         }
 
         // --- Check Session on Load ---
