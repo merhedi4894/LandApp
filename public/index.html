@@ -12,7 +12,6 @@
         }
     </script>
     <style>
-        /* আগের স্টাইলগুলো এখানে থাকবে (কপি করে দিন) */
         * { font-family: 'Inter', sans-serif; }
         body { background: linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 100%); min-height: 100vh; }
         .input-field { transition: all 0.2s; border: 2px solid #e2e8f0; }
@@ -23,8 +22,22 @@
         .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
         .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
         .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
+        
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 15px; }
-        .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #0ea5e9; max-height: 200px; overflow-y: auto; z-index: 50; border-radius: 0 0 8px 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .profile-img { object-fit: cover; border: 2px solid #1e3a5f; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        .dropdown-list { 
+            position: absolute; 
+            top: 100%; left: 0; right: 0; 
+            background: white; border: 2px solid #0ea5e9; 
+            max-height: 200px; overflow-y: auto; 
+            z-index: 50; 
+            border-radius: 0 0 8px 8px; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
         .person-block { border-left: 4px solid #1e3a5f; padding-left: 15px; margin-bottom: 20px; }
         .person-name-header { font-size: 1.1rem; font-weight: 800; color: #1e3a5f; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
         .status-line { margin-bottom: 4px; font-size: 0.95rem; }
@@ -33,9 +46,11 @@
     </style>
 </head>
 <body class="p-2 sm:p-4 md:p-6">
+
     <!-- LOGIN SECTION -->
     <div id="loginSection" class="max-w-md mx-auto">
         <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 text-center">
+            <img src="https://i.imgur.com/8CJlOgq.png" alt="" class="w-20 h-20 rounded-full mx-auto mb-4 profile-img" loading="lazy" onerror="this.style.display='none'">
             <h2 class="text-2xl font-bold text-primary mb-6">Login</h2>
             <form id="loginForm">
                 <input type="text" id="username" value="mehedi4894" class="input-field w-full px-4 py-3 rounded-lg mb-4 bg-gray-100 font-semibold" required>
@@ -48,87 +63,135 @@
 
     <!-- MAIN APP SECTION -->
     <div id="appSection" class="hidden max-w-5xl mx-auto">
+        
         <!-- Header -->
         <div class="bg-primary rounded-t-2xl p-4 text-white flex flex-col sm:flex-row justify-between items-center gap-3">
-            <div class="text-center sm:text-left">
-                <h1 class="text-xl font-bold">ভূমি লিজ ব্যবস্থাপনা</h1>
-                <p class="text-sm font-semibold text-blue-200">মো: মেহেদী হাসান</p>
+            <div class="flex items-center gap-3 text-center sm:text-left">
+                <img src="https://i.imgur.com/8CJlOgq.png" alt="" class="w-10 h-10 rounded-full border-2 border-white hidden sm:block profile-img" loading="lazy" onerror="this.style.display='none'">
+                <div>
+                    <h1 class="text-xl font-bold">ভূমি লিজ ব্যবস্থাপনা</h1>
+                    <p class="text-sm font-semibold text-blue-200">মো: মেহেদী হাসান</p>
+                </div>
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 w-full sm:w-auto justify-center items-center">
                 <button onclick="toggleLanguage()" id="langToggleBtn" class="btn bg-yellow-500 text-black px-4 py-2 rounded-lg text-sm font-bold">EN</button>
-                <button onclick="openSettingsModal()" class="btn bg-white text-primary px-4 py-2 rounded-lg text-sm font-bold">Settings</button>
-                <button onclick="logout()" class="btn bg-red-500/80 px-4 py-2 rounded-lg text-sm">Logout</button>
+                <button onclick="openSettingsModal()" class="btn bg-white text-primary px-4 py-2 rounded-lg text-sm font-bold flex-1 sm:flex-none">Settings</button>
+                <button onclick="logout()" class="btn bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded-lg text-sm flex-1 sm:flex-none">Logout</button>
             </div>
         </div>
         
         <div class="bg-white rounded-b-2xl shadow-xl p-4 sm:p-6">
+            
             <!-- ENTRY FORM -->
             <div class="border-b pb-6 mb-6">
                 <h3 class="text-lg font-bold text-primary mb-4">New Entry</h3>
                 <form id="landForm">
                     <div class="grid grid-cols-2 md:grid-cols-8 gap-4 items-end">
+                        
                         <div class="relative col-span-2">
                             <label class="block text-xs font-semibold text-gray-600 mb-1">নাম</label>
-                            <input type="text" id="newEntryNameInput" placeholder="Type or Select" class="input-field w-full px-3 py-2 rounded-lg text-sm bg-white" autocomplete="off" required>
+                            <input type="text" id="newEntryNameInput" placeholder="Type or Select Name" 
+                                   class="input-field w-full px-3 py-2 rounded-lg text-sm bg-white cursor-pointer" autocomplete="off" required>
+                            <div class="absolute right-3 top-9 pointer-events-none text-gray-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
                             <div id="newEntryNameDropdown" class="hidden dropdown-list"></div>
                         </div>
+
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">জমি</label>
-                            <select id="land" required onchange="updateDetailsByLand()" class="input-field w-full px-3 py-2 rounded-lg bg-white"><option value="">Select</option></select>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">জমির পরিমাণ</label>
+                            <select id="land" required onchange="updateDetailsByLand()" class="input-field w-full px-3 py-2 rounded-lg bg-white">
+                                <option value="">Select</option>
+                            </select>
                         </div>
+                        
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">হারি গণনা</label>
-                            <input type="text" id="hariBorshoDisplay" readonly class="input-field w-full px-3 py-2 rounded-lg bg-gray-100">
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">হারি গণনা শুরু</label>
+                            <input type="text" id="hariBorshoDisplay" readonly class="input-field w-full px-3 py-2 rounded-lg text-sm bg-gray-100 cursor-not-allowed" placeholder="-">
                         </div>
+
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">হারি রেট</label>
-                            <select id="rate" required class="input-field w-full px-3 py-2 rounded-lg bg-white"><option value="">Select</option></select>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">বিঘা প্রতি হারি</label>
+                            <select id="rate" required class="input-field w-full px-3 py-2 rounded-lg bg-white">
+                                <option value="">Select</option>
+                            </select>
                         </div>
+                        
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">টাকা</label>
-                            <input type="number" id="tkGiven" class="input-field w-full px-3 py-2 rounded-lg">
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">প্রদেয় টাকা</label>
+                            <input type="number" id="tkGiven" placeholder="Amount" class="input-field w-full px-3 py-2 rounded-lg">
                         </div>
+
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 mb-1">লিজ বর্ষ</label>
-                            <input type="text" id="hariYear" class="input-field w-full px-3 py-2 rounded-lg bg-white">
+                            <input type="text" id="hariYear" placeholder="e.g. 2024" 
+                                   class="input-field w-full px-3 py-2 rounded-lg text-sm bg-white" autocomplete="off">
                         </div>
+                        
                         <div>
                             <button type="submit" class="btn btn-primary w-full py-2.5 rounded-lg font-semibold text-sm">Save</button>
                         </div>
                     </div>
-                    <div id="successMsg" class="hidden mt-3 text-green-600 text-sm text-center font-semibold">Saved!</div>
+                    <div id="successMsg" class="hidden mt-3 text-green-600 text-sm text-center font-semibold">Saved Successfully!</div>
                 </form>
             </div>
 
-            <!-- SEARCH -->
+            <!-- SEARCH & DATABASE -->
             <div>
-                <h3 class="text-lg font-bold text-primary mb-4">Search</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3">
-                    <div class="relative">
-                        <input type="text" id="searchNameInput" placeholder="Name" class="input-field w-full px-3 py-2 rounded-lg bg-white" autocomplete="off">
-                        <input type="hidden" id="searchName" value="ALL">
-                        <div id="nameDropdown" class="hidden dropdown-list"></div>
+                <h3 class="text-lg font-bold text-primary mb-4">Search Database</h3>
+                
+                <div class="space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                        <div class="relative">
+                            <label class="block text-xs text-gray-500 mb-1">নাম</label>
+                            <input type="text" id="searchNameInput" placeholder="Select Name" 
+                                   class="input-field w-full px-3 py-2 rounded-lg text-sm bg-white cursor-pointer" autocomplete="off">
+                            <div class="absolute right-3 top-9 pointer-events-none text-gray-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                            <input type="hidden" id="searchName" value="ALL">
+                            <div id="nameDropdown" class="hidden dropdown-list"></div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">জমির পরিমাণ</label>
+                            <select id="searchLand" class="input-field w-full px-3 py-2 rounded-lg bg-white text-sm">
+                                <option value="ALL">All Lands</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">বছর</label>
+                            <select id="searchYear" class="input-field w-full px-3 py-2 rounded-lg bg-white text-sm">
+                                <option value="ALL">All Years</option>
+                            </select>
+                        </div>
                     </div>
-                    <select id="searchLand" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL">All Lands</option></select>
-                    <select id="searchYear" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL">All Years</option></select>
-                    <div class="flex gap-2">
-                        <button onclick="searchStatus()" class="btn btn-success px-4 rounded-lg flex-1">Status</button>
-                        <button onclick="viewDatabase()" class="btn bg-purple-600 px-4 rounded-lg flex-1">Data</button>
-                        <button onclick="deleteRecordsAction()" class="btn btn-danger px-4 rounded-lg">Del</button>
+
+                    <div class="flex flex-wrap gap-2 justify-start">
+                        <button onclick="searchStatus()" class="btn btn-success py-2 px-4 rounded-lg text-xs sm:text-sm font-semibold flex-1 sm:flex-none">Due Status</button>
+                        <button onclick="viewDatabase()" class="btn bg-purple-600 text-white py-2 px-4 rounded-lg text-xs sm:text-sm font-semibold flex-1 sm:flex-none">Database</button>
+                        <button onclick="deleteRecordsAction()" class="btn btn-danger py-2 px-4 rounded-lg text-xs sm:text-sm font-semibold flex-1 sm:flex-none">Delete</button>
                     </div>
                 </div>
 
-                <!-- Result -->
+                <!-- Result Area -->
                 <div id="resultArea" class="hidden mt-4">
-                    <div id="statusCard" class="hidden mb-4 p-4 bg-blue-50 border rounded-xl"></div>
-                    <div id="databaseCard" class="hidden overflow-x-auto border rounded-lg">
-                        <table class="w-full text-xs border-collapse">
+                    <div id="statusCard" class="hidden mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl text-center overflow-hidden"></div>
+                    <div id="databaseCard" class="hidden table-responsive border rounded-lg">
+                         <table class="w-full text-xs border-collapse min-w-[600px]">
                             <thead class="bg-gray-100"><tr>
-                                <th class="p-2 border">Date</th><th class="p-2 border">Name</th><th class="p-2 border">Land</th>
-                                <th class="p-2 border">Rate</th><th class="p-2 border">Total</th><th class="p-2 border">Given</th><th class="p-2 border">Year</th>
+                                <th class="p-2 border">Date</th>
+                                <th class="p-2 border">Name</th>
+                                <th class="p-2 border">Land</th>
+                                <th class="p-2 border">Rate</th>
+                                <th class="p-2 border">Total</th>
+                                <th class="p-2 border">Given</th>
+                                <th class="p-2 border">Lease Year</th>
                             </tr></thead>
                             <tbody id="tableBody"></tbody>
                         </table>
+                        <p id="noDataMsg" class="hidden text-center text-gray-400 py-4">No records found</p>
                     </div>
                 </div>
             </div>
@@ -137,41 +200,67 @@
 
     <!-- SETTINGS MODAL -->
     <div id="settingsModal" class="hidden modal-overlay">
-        <div class="bg-white rounded-2xl w-full max-w-3xl m-4 max-h-[90vh] flex flex-col">
-            <div class="p-4 border-b bg-primary text-white rounded-t-2xl flex justify-between">
-                <h3 class="font-bold">Settings: Profiles</h3>
-                <button onclick="closeSettingsModal()" class="text-white text-2xl">&times;</button>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl m-4 max-h-[90vh] flex flex-col relative">
+            <div class="p-4 border-b bg-primary text-white rounded-t-2xl flex justify-between items-center shrink-0">
+                <h3 class="text-lg font-bold">Settings: Manage Profiles</h3>
+                <button onclick="closeSettingsModal()" class="text-white hover:text-gray-200 text-2xl font-bold absolute top-2 right-4">&times;</button>
             </div>
-            <div class="p-6 overflow-y-auto">
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                    <input type="text" id="editName" placeholder="Name" class="input-field px-3 py-2 rounded-lg">
-                    <input type="number" id="editLand" placeholder="Land" class="input-field px-3 py-2 rounded-lg">
-                    <input type="text" id="editHariBorsho" placeholder="Hari Start" class="input-field px-3 py-2 rounded-lg">
-                    <input type="number" id="editRate" placeholder="Rate" class="input-field px-3 py-2 rounded-lg">
-                    <div class="flex gap-2">
-                        <button onclick="saveProfileAction()" class="btn btn-primary px-4 rounded-lg flex-1">Save</button>
+            <div class="p-6 overflow-y-auto flex-grow">
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 p-4 bg-gray-50 rounded-lg border">
+                    <div>
+                        <label class="block text-xs font-semibold mb-1">Name</label>
+                        <input type="text" id="editName" placeholder="Name" class="input-field w-full px-3 py-2 rounded-lg">
+                        <!-- Hidden Inputs for Update Logic -->
+                        <input type="hidden" id="oldName">
+                        <input type="hidden" id="oldLand">
+                        <input type="hidden" id="oldRate">
+                        <input type="hidden" id="oldHariBorsho">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold mb-1">Land</label>
+                        <input type="number" id="editLand" step="any" placeholder="Land" class="input-field w-full px-3 py-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold mb-1">হারি গণনা শুরু</label>
+                        <input type="text" id="editHariBorsho" placeholder="e.g. বৈশাখ" class="input-field w-full px-3 py-2 rounded-lg bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold mb-1">Rate</label>
+                        <input type="number" id="editRate" step="any" placeholder="Rate" class="input-field w-full px-3 py-2 rounded-lg">
+                    </div>
+                    <div class="flex items-end gap-2 col-span-2 md:col-span-1">
+                        <button onclick="saveProfileAction()" class="btn btn-primary flex-1 py-2 rounded-lg font-semibold text-sm">Save</button>
+                        <button onclick="resetSettingsForm()" class="btn bg-gray-400 py-2 px-3 rounded-lg font-semibold text-sm">Clear</button>
                     </div>
                 </div>
-                <table class="w-full text-sm border-collapse">
-                    <thead class="bg-gray-100"><tr>
-                        <th class="p-2 border text-left">Name</th><th class="p-2 border">Land</th>
-                        <th class="p-2 border">Start</th><th class="p-2 border">Rate</th><th class="p-2 border">Action</th>
-                    </tr></thead>
-                    <tbody id="settingsTableBody"></tbody>
-                </table>
+                <h4 class="font-bold text-gray-700 mb-2">Saved Profiles</h4>
+                <div class="overflow-x-auto border rounded-lg">
+                    <table class="w-full text-sm border-collapse min-w-[500px]">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="p-2 border text-left">Name</th>
+                                <th class="p-2 border text-center">Land</th>
+                                <th class="p-2 border text-center">হারি গণনা</th>
+                                <th class="p-2 border text-center">Rate</th>
+                                <th class="p-2 border text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="settingsTableBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Logic converted to use Fetch API instead of google.script.run
-        
+        // --- APP LOGIC (Node.js Backend Compatible) ---
         let currentLang = 'bn';
         let currentUser = null;
         let userProfiles = []; 
         let allSearchNames = [];
         let searchLandMap = {};
         let searchYearMap = {}; 
+        let allSearchYears = [];
 
         // --- API HELPER ---
         async function apiCall(url, data = {}) {
@@ -212,6 +301,7 @@
             localStorage.removeItem('landSession');
             document.getElementById('appSection').classList.add('hidden');
             document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('password').value = '';
         }
 
         // --- INIT DATA ---
@@ -221,14 +311,19 @@
             populateFormNames(userProfiles);
             
             const options = data.searchOptions || {};
+            allSearchYears = options.years || [];
+            searchYearMap = options.yearMap || {};
             allSearchNames = options.names || []; 
             searchLandMap = options.landMap || {};
-            searchYearMap = options.yearMap || {};
             
             populateNameDropdown(allSearchNames);
-            updateSearchYearDropdown("ALL");
+            const currentName = document.getElementById('searchName').value;
+            if (currentName && currentName !== "ALL") updateSearchYearDropdown(currentName);
+            else updateSearchYearDropdown("ALL");
             
-            if (!document.getElementById('settingsModal').classList.contains('hidden')) renderSettingsTable(userProfiles);
+            if (!document.getElementById('settingsModal').classList.contains('hidden')) {
+                renderSettingsTable(userProfiles);
+            }
         }
 
         // --- NEW ENTRY LOGIC ---
@@ -236,34 +331,46 @@
             const distinctNames = [...new Set(profiles.map(p => p.name))];
             const dropdown = document.getElementById('newEntryNameDropdown');
             dropdown.innerHTML = '';
-            distinctNames.forEach(n => {
-                const item = document.createElement('div');
-                item.className = "p-2 cursor-pointer hover:bg-gray-100 border-b";
-                item.textContent = n;
-                item.onclick = () => {
-                    document.getElementById('newEntryNameInput').value = n;
-                    dropdown.classList.add('hidden');
-                    updateLandRateDropdowns(n);
-                };
-                dropdown.appendChild(item);
-            });
+            if(distinctNames.length === 0) dropdown.innerHTML = `<div class="p-2 text-gray-400 italic">No Profiles</div>`;
+            else {
+                distinctNames.forEach(n => {
+                    const item = document.createElement('div');
+                    item.className = "p-2 cursor-pointer hover:bg-gray-100 border-b";
+                    item.textContent = n;
+                    item.onclick = () => selectNewEntryName(n);
+                    dropdown.appendChild(item);
+                });
+            }
+        }
+
+        function selectNewEntryName(name) {
+            document.getElementById('newEntryNameInput').value = name;
+            document.getElementById('newEntryNameDropdown').classList.add('hidden');
+            updateLandRateDropdowns(name);
         }
 
         function updateLandRateDropdowns(name) {
             const matches = userProfiles.filter(p => p.name === name);
             const landSelect = document.getElementById('land');
             const rateSelect = document.getElementById('rate');
+            const hariInput = document.getElementById('hariBorshoDisplay');
+            
             landSelect.innerHTML = `<option value="">Select</option>`;
             rateSelect.innerHTML = `<option value="">Select</option>`;
-            document.getElementById('hariBorshoDisplay').value = "";
+            hariInput.value = "";
             
             if (matches.length > 0) {
-                matches.forEach(p => landSelect.innerHTML += `<option value="${p.land}">${p.land}</option>`);
+                const uniqueLands = [...new Set(matches.map(p => p.land))];
+                uniqueLands.forEach(l => landSelect.innerHTML += `<option value="${l}">${l}</option>`);
+                
                 if (matches.length === 1) {
                     landSelect.value = matches[0].land;
                     rateSelect.innerHTML = `<option value="${matches[0].rate}">${matches[0].rate}</option>`;
                     rateSelect.value = matches[0].rate;
-                    document.getElementById('hariBorshoDisplay').value = matches[0].hariBorsho || "-";
+                    hariInput.value = matches[0].hariBorsho || "-";
+                } else {
+                    landSelect.value = uniqueLands[0];
+                    updateDetailsByLand();
                 }
             }
         }
@@ -272,12 +379,12 @@
             const name = document.getElementById('newEntryNameInput').value;
             const land = document.getElementById('land').value;
             if (!name || !land) return;
-            const profile = userProfiles.find(p => p.name === name && p.land == land);
-            if (profile) {
+            const specificProfile = userProfiles.find(p => p.name === name && p.land == land);
+            if (specificProfile) {
                 const rateSelect = document.getElementById('rate');
-                rateSelect.innerHTML = `<option value="${profile.rate}">${profile.rate}</option>`;
-                rateSelect.value = profile.rate;
-                document.getElementById('hariBorshoDisplay').value = profile.hariBorsho || "-";
+                rateSelect.innerHTML = `<option value="${specificProfile.rate}">${specificProfile.rate}</option>`;
+                rateSelect.value = specificProfile.rate;
+                document.getElementById('hariBorshoDisplay').value = specificProfile.hariBorsho || "-";
             }
         }
 
@@ -288,202 +395,333 @@
             const land = document.getElementById('land').value;
             const rate = document.getElementById('rate').value;
             
-            if (!name || !land || !rate) return alert("Fill all fields");
+            if (!name || !land || !rate) return alert("Please fill all required fields.");
 
             const formData = {
-                name, land, rate,
+                name: name, land: land, rate: rate,
+                totalTk: ((parseFloat(rate) / 33) * parseFloat(land)).toFixed(2),
                 tkGiven: document.getElementById('tkGiven').value || 0,
                 hariYear: document.getElementById('hariYear').value,
                 loggedInUser: currentUser.name
             };
 
+            const btn = document.querySelector('#landForm button[type="submit"]');
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
             const res = await apiCall('/api/saveFormData', formData);
+            
+            btn.disabled = false;
+            btn.innerText = "Save";
+            
             if(res.success) {
-                document.getElementById('successMsg').classList.remove('hidden');
-                this.reset();
-                setTimeout(() => document.getElementById('successMsg').classList.add('hidden'), 2000);
-                loadInitialData();
+                const msg = document.getElementById('successMsg');
+                msg.classList.remove('hidden');
+                document.getElementById('landForm').reset(); 
+                document.getElementById('newEntryNameInput').value = ''; 
+                document.getElementById('hariBorshoDisplay').value = '';
+                loadInitialData(); 
+                setTimeout(() => { msg.classList.add('hidden'); }, 2000);
             } else {
-                alert("Error saving");
+                alert("Error saving data.");
             }
         });
 
-        // --- SEARCH & STATUS ---
+        // --- SEARCH LOGIC ---
         function populateNameDropdown(names) {
             const dropdown = document.getElementById('nameDropdown');
-            dropdown.innerHTML = `<div class="p-2 cursor-pointer hover:bg-gray-100 font-bold text-blue-600" onclick="selectSearchName('ALL', 'All Names')">All Names</div>`;
-            names.forEach(n => {
-                 dropdown.innerHTML += `<div class="p-2 cursor-pointer hover:bg-gray-100" onclick="selectSearchName('${n}', '${n}')">${n}</div>`;
-            });
+            dropdown.innerHTML = '';
+            const allItem = document.createElement('div');
+            allItem.className = "p-2 cursor-pointer hover:bg-gray-100 font-semibold text-blue-600 border-b";
+            allItem.textContent = currentLang === 'bn' ? "সব নাম" : "All Names";
+            allItem.onclick = () => selectSearchName("ALL", currentLang === 'bn' ? "সব নাম" : "All Names");
+            dropdown.appendChild(allItem);
+
+            if (!names || names.length === 0) {
+                dropdown.innerHTML += `<div class="p-2 text-gray-400 italic">No data</div>`;
+            } else {
+                names.forEach(name => {
+                    const item = document.createElement('div');
+                    item.className = "p-2 cursor-pointer hover:bg-gray-100 border-b";
+                    item.textContent = name;
+                    item.onclick = () => selectSearchName(name, name);
+                    dropdown.appendChild(item);
+                });
+            }
         }
-        
-        function selectSearchName(val, txt) {
-            document.getElementById('searchName').value = val;
-            document.getElementById('searchNameInput').value = txt;
+
+        function selectSearchName(value, displayText) {
+            document.getElementById('searchName').value = value;
+            document.getElementById('searchNameInput').value = displayText;
             document.getElementById('nameDropdown').classList.add('hidden');
-            updateSearchLandDropdown(val);
-            updateSearchYearDropdown(val);
+            updateSearchLandDropdown(value);
+            updateSearchYearDropdown(value);
         }
 
         function updateSearchLandDropdown(name) {
-            const sel = document.getElementById('searchLand');
-            sel.innerHTML = `<option value="ALL">All Lands</option>`;
+            const landSelect = document.getElementById('searchLand');
+            landSelect.innerHTML = `<option value="ALL">All Lands</option>`;
             if (name !== "ALL" && searchLandMap[name]) {
-                searchLandMap[name].forEach(l => sel.innerHTML += `<option value="${l}">${l}</option>`);
+                searchLandMap[name].forEach(land => {
+                    landSelect.innerHTML += `<option value="${land}">${land}</option>`;
+                });
             }
         }
 
         function updateSearchYearDropdown(name) {
-            const sel = document.getElementById('searchYear');
-            sel.innerHTML = `<option value="ALL">All Years</option>`;
-            let years = (name === "ALL") ? [] : (searchYearMap[name] || []); // simplified for example
-            if(name === "ALL") {
-                // Gather all years from map
-                let ySet = new Set();
-                Object.values(searchYearMap).forEach(arr => arr.forEach(y => ySet.add(y)));
-                years = Array.from(ySet).sort((a,b) => b-a);
-            }
-            years.forEach(y => sel.innerHTML += `<option value="${y}">${y}</option>`);
+            const yearSelect = document.getElementById('searchYear');
+            yearSelect.innerHTML = `<option value="ALL">All Years</option>`;
+            let years = (name === "ALL") ? allSearchYears : (searchYearMap[name] || []);
+            years.forEach(y => yearSelect.innerHTML += `<option value="${y}">${y}</option>`);
         }
 
+        // --- STATUS & DATABASE ---
         async function searchStatus() {
-            const searchData = {
-                name: document.getElementById('searchName').value,
-                land: document.getElementById('searchLand').value,
-                year: document.getElementById('searchYear').value
-            };
+            const nameVal = document.getElementById('searchName').value || "ALL";
+            const nameText = document.getElementById('searchNameInput').value || "All Names";
+            const landVal = document.getElementById('searchLand').value || "ALL";
+            const yearVal = document.getElementById('searchYear').value || "ALL";
+            const searchData = { name: nameVal, land: landVal, year: yearVal };
             
             const data = await apiCall('/api/getReportData', searchData);
+            
             document.getElementById('resultArea').classList.remove('hidden');
             document.getElementById('statusCard').classList.remove('hidden');
             document.getElementById('databaseCard').classList.add('hidden');
             
-            // Calculation Logic (Same as before)
             if(data.records.length > 0) {
-                let html = `<div class="text-left divide-y">`;
-                const grouped = {};
-
+                const peopleMap = {};
                 data.records.forEach(r => {
-                    const key = r.name + "-" + r.year; // Simplified grouping
-                    if(!grouped[key]) grouped[key] = { name: r.name, year: r.year, total: 0, paid: 0 };
-                    // Note: Total calculation logic should match your original complex logic
-                    // Here is a simple example for display:
-                    grouped[key].total += parseFloat(r.total);
-                    grouped[key].paid += parseFloat(r.given);
+                    const rName = r.name;
+                    const rYear = r.hariYear || "Unknown";
+                    const rLand = r.land;
+                    
+                    if (!peopleMap[rName]) peopleMap[rName] = {};
+                    if (!peopleMap[rName][rYear]) peopleMap[rName][rYear] = {};
+                    if (!peopleMap[rName][rYear][rLand]) {
+                        peopleMap[rName][rYear][rLand] = { total: 0, paid: 0, totalSet: false };
+                    }
+
+                    if (!peopleMap[rName][rYear][rLand].totalSet) {
+                        peopleMap[rName][rYear][rLand].total = parseFloat(r.total);
+                        peopleMap[rName][rYear][rLand].totalSet = true;
+                    }
+                    peopleMap[rName][rYear][rLand].paid += parseFloat(r.given);
                 });
 
-                for(let key in grouped) {
-                    const g = grouped[key];
-                    const due = g.total - g.paid;
-                    const color = due > 0 ? 'text-red-600' : 'text-green-600';
-                    html += `<div class="p-2">
-                        <b>${g.name}</b> (${g.year}) - Total: ${g.total.toFixed(2)} | Paid: ${g.paid.toFixed(2)} 
-                        <br><span class="${color} font-bold">Due: ${due.toFixed(2)}</span>
-                    </div>`;
-                }
-                html += `</div>`;
-                document.getElementById('statusCard').innerHTML = html;
+                let statusHtml = `<div class="bg-white p-4 rounded-lg text-left divide-y">`;
+                const sortedNames = Object.keys(peopleMap).sort();
+                
+                sortedNames.forEach(personName => {
+                    let personContentHtml = "";
+                    const years = peopleMap[personName];
+                    const sortedYears = Object.keys(years).sort((a, b) => b - a);
+                    
+                    sortedYears.forEach(year => {
+                        const lands = years[year];
+                        Object.keys(lands).forEach(land => {
+                            const stats = lands[land];
+                            const due = stats.total - stats.paid;
+                            if (due > 0) {
+                                personContentHtml += `<p class="status-line text-red-600">${year} সালের ${land} শতাংশ জমির বকেয়া ${due.toLocaleString('en-IN')} টাকা</p>`;
+                            }
+                        });
+                    });
+                    
+                    if (personContentHtml) {
+                        statusHtml += `<div class="person-block"><div class="person-name-header">${personName}</div>${personContentHtml}</div>`;
+                    }
+                });
+                
+                statusHtml += `</div>`;
+                document.getElementById('statusCard').innerHTML = statusHtml;
             } else {
-                document.getElementById('statusCard').innerHTML = "<p class='text-center p-4'>No Data</p>";
+                document.getElementById('statusCard').innerHTML = `<div class="text-center py-6 text-gray-500">No records found</div>`;
             }
         }
 
         async function viewDatabase() {
-             const searchData = {
-                name: document.getElementById('searchName').value,
-                land: document.getElementById('searchLand').value,
-                year: document.getElementById('searchYear').value
-            };
+            const nameVal = document.getElementById('searchName').value || "ALL";
+            const landVal = document.getElementById('searchLand').value || "ALL";
+            const searchData = { name: nameVal, land: landVal, year: document.getElementById('searchYear').value };
+            
             const data = await apiCall('/api/getReportData', searchData);
+            
             document.getElementById('resultArea').classList.remove('hidden');
             document.getElementById('statusCard').classList.add('hidden');
             document.getElementById('databaseCard').classList.remove('hidden');
             
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            data.records.forEach(r => {
-                tbody.innerHTML += `<tr class="hover:bg-gray-50">
-                    <td class="p-2 border">${r.date}</td>
-                    <td class="p-2 border">${r.name}</td>
-                    <td class="p-2 border text-center">${r.land}</td>
-                    <td class="p-2 border text-center">${r.rate}</td>
-                    <td class="p-2 border text-right">${r.total}</td>
-                    <td class="p-2 border text-right">${r.given}</td>
-                    <td class="p-2 border text-center">${r.hariYear || r.year}</td>
-                </tr>`;
-            });
+            const tbody = document.getElementById('tableBody'); 
+            tbody.innerHTML = "";
+            
+            if(data.records.length === 0) {
+                document.getElementById('noDataMsg').classList.remove('hidden');
+            } else {
+                document.getElementById('noDataMsg').classList.add('hidden');
+                data.records.forEach(r => {
+                    tbody.innerHTML += `<tr class="hover:bg-gray-50">
+                        <td class="p-2 border">${r.date}</td>
+                        <td class="p-2 border font-medium">${r.name}</td>
+                        <td class="p-2 border text-center">${r.land}</td>
+                        <td class="p-2 border text-center">${r.rate}</td>
+                        <td class="p-2 border text-right">${parseFloat(r.total).toLocaleString('en-IN')}</td>
+                        <td class="p-2 border text-right text-green-600">${parseFloat(r.given).toLocaleString('en-IN')}</td>
+                        <td class="p-2 border text-center">${r.hariYear || "-"}</td>
+                    </tr>`;
+                });
+            }
         }
 
         async function deleteRecordsAction() {
             const name = document.getElementById('searchName').value;
             const year = document.getElementById('searchYear').value;
-            if (name === "ALL" || year === "ALL") return alert("Select specific name and year");
-            if(confirm("Delete data for " + name + " in " + year + "?")) {
-                const res = await apiCall('/api/deleteRecords', { name, year });
+            if (name === "ALL" || year === "ALL") { alert("Select specific Name and Year."); return; }
+            if(confirm(`Delete data for ${name} in year ${year}?`)) {
+                const res = await apiCall('/api/deleteRecords', { name: name, year: year });
                 alert(res.message);
                 document.getElementById('resultArea').classList.add('hidden');
             }
         }
 
-        // --- SETTINGS ---
+        // --- SETTINGS MODAL LOGIC ---
         function openSettingsModal() { 
             document.getElementById('settingsModal').classList.remove('hidden'); 
             renderSettingsTable(userProfiles); 
         }
-        function closeSettingsModal() { document.getElementById('settingsModal').classList.add('hidden'); }
+        function closeSettingsModal() { 
+            document.getElementById('settingsModal').classList.add('hidden'); 
+            resetSettingsForm(); 
+        }
         
         function renderSettingsTable(profiles) {
-            const tbody = document.getElementById('settingsTableBody'); tbody.innerHTML = "";
-            profiles.forEach(p => {
-                tbody.innerHTML += `<tr class="border-b">
-                    <td class="p-2 border">${p.name}</td>
-                    <td class="p-2 border text-center">${p.land}</td>
-                    <td class="p-2 border text-center">${p.hariBorsho || "-"}</td>
-                    <td class="p-2 border text-center">${p.rate}</td>
-                    <td class="p-2 border text-center">
-                        <button onclick="deleteProfileAction('${p.name}', '${p.land}', '${p.rate}')" class="btn btn-danger px-2 py-1 rounded text-xs">Del</button>
-                    </td>
-                </tr>`;
-            });
+            const tbody = document.getElementById('settingsTableBody'); 
+            tbody.innerHTML = "";
+            if(profiles.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-400 p-4">No profiles found</td></tr>`;
+            } else {
+                profiles.forEach(p => {
+                    tbody.innerHTML += `<tr class="border-b hover:bg-gray-50">
+                        <td class="p-3 border font-semibold">${p.name}</td>
+                        <td class="p-3 border text-center">${p.land}</td>
+                        <td class="p-3 border text-center">${p.hariBorsho || "-"}</td>
+                        <td class="p-3 border text-center">${p.rate}</td>
+                        <td class="p-3 border text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                <button onclick="editProfileAction('${p.name}', '${p.land}', '${p.rate}', '${p.hariBorsho || ""}')" class="btn btn-warning px-3 py-1 rounded text-xs">Edit</button>
+                                <button onclick="deleteProfileAction('${p.name}', '${p.land}', '${p.rate}')" class="btn btn-danger px-2 py-0.5 rounded text-[10px]">Del</button>
+                            </div>
+                        </td>
+                    </tr>`;
+                });
+            }
         }
-
-        async function saveProfileAction() {
-            const data = {
-                name: document.getElementById('editName').value,
-                land: document.getElementById('editLand').value,
-                rate: document.getElementById('editRate').value,
-                hariBorsho: document.getElementById('editHariBorsho').value
-            };
-            if(!data.name || !data.land || !data.rate) return alert("Fill Name, Land, Rate");
-            await apiCall('/api/saveProfile', data);
-            loadInitialData();
-            // Clear inputs
+        
+        function editProfileAction(name, land, rate, hariBorsho) {
+            document.getElementById('editName').value = name; 
+            document.getElementById('editLand').value = land; 
+            document.getElementById('editRate').value = rate; 
+            document.getElementById('editHariBorsho').value = hariBorsho;
+            
+            // Hidden fields set করা হচ্ছে যাতে সার্ভার বুঝতে পারে কোন ডাটা আপডেট করতে হবে
+            document.getElementById('oldName').value = name; 
+            document.getElementById('oldLand').value = land; 
+            document.getElementById('oldRate').value = rate; 
+            document.getElementById('oldHariBorsho').value = hariBorsho;
+        }
+        
+        function resetSettingsForm() { 
             document.getElementById('editName').value = ''; 
-            document.getElementById('editLand').value = '';
-            document.getElementById('editRate').value = '';
-            document.getElementById('editHariBorsho').value = '';
+            document.getElementById('editLand').value = ''; 
+            document.getElementById('editRate').value = ''; 
+            document.getElementById('editHariBorsho').value = ''; 
+            document.getElementById('oldName').value = ''; 
+            document.getElementById('oldLand').value = ''; 
+            document.getElementById('oldRate').value = ''; 
+            document.getElementById('oldHariBorsho').value = ''; 
         }
-
+        
+        async function saveProfileAction() {
+            const data = { 
+                name: document.getElementById('editName').value, 
+                land: document.getElementById('editLand').value, 
+                rate: document.getElementById('editRate').value, 
+                hariBorsho: document.getElementById('editHariBorsho').value, 
+                oldName: document.getElementById('oldName').value, 
+                oldLand: document.getElementById('oldLand').value, 
+                oldRate: document.getElementById('oldRate').value, 
+                oldHariBorsho: document.getElementById('oldHariBorsho').value 
+            };
+            
+            if(!data.name || !data.land || !data.rate) { alert("Please fill Name, Land, Rate"); return; }
+            
+            const res = await apiCall('/api/saveProfile', data);
+            
+            if(res.success) {
+                resetSettingsForm(); 
+                loadInitialData(); 
+            } else {
+                alert("Error: " + res.message);
+            }
+        }
+        
         async function deleteProfileAction(name, land, rate) {
-            if(confirm("Delete profile?")) {
-                await apiCall('/api/deleteProfile', { name, land, rate });
+            if(confirm(`Delete profile of ${name}?`)) {
+                await apiCall('/api/deleteProfile', { name: name, land: land, rate: rate });
                 loadInitialData();
             }
         }
 
         // --- Event Listeners for Dropdowns ---
-        document.getElementById('newEntryNameInput').addEventListener('focus', function() {
-            document.getElementById('newEntryNameDropdown').classList.remove('hidden');
+        const newEntryNameInput = document.getElementById('newEntryNameInput');
+        const newEntryNameDropdown = document.getElementById('newEntryNameDropdown');
+        
+        newEntryNameInput.addEventListener('focus', function() {
+            newEntryNameDropdown.classList.remove('hidden');
+            newEntryNameInput.select();
         });
-        document.getElementById('searchNameInput').addEventListener('focus', function() {
-            document.getElementById('nameDropdown').classList.remove('hidden');
-        });
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('#newEntryNameInput')) document.getElementById('newEntryNameDropdown').classList.add('hidden');
-            if (!e.target.closest('#searchNameInput')) document.getElementById('nameDropdown').classList.add('hidden');
+        
+        newEntryNameInput.addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            const items = newEntryNameDropdown.getElementsByTagName('div');
+            for (let i = 0; i < items.length; i++) {
+                const txtValue = items[i].textContent || items[i].innerText;
+                items[i].style.display = txtValue.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+            }
         });
 
-        // Check Session
+        const searchNameInput = document.getElementById('searchNameInput');
+        const nameDropdown = document.getElementById('nameDropdown');
+
+        searchNameInput.addEventListener('focus', function() {
+            nameDropdown.classList.remove('hidden');
+            searchNameInput.select();
+        });
+        
+        searchNameInput.addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            const items = nameDropdown.getElementsByTagName('div');
+            for (let i = 0; i < items.length; i++) {
+                const txtValue = items[i].textContent || items[i].innerText;
+                items[i].style.display = txtValue.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+            }
+            nameDropdown.classList.remove('hidden');
+            document.getElementById('searchName').value = this.value || "ALL";
+        });
+
+        // Global click listener to close dropdowns
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#searchNameInput') && !e.target.closest('#nameDropdown')) nameDropdown.classList.add('hidden');
+            if (!e.target.closest('#newEntryNameInput') && !e.target.closest('#newEntryNameDropdown')) newEntryNameDropdown.classList.add('hidden');
+        });
+
+        // --- Language Toggle ---
+        function toggleLanguage() {
+            currentLang = currentLang === 'bn' ? 'en' : 'bn';
+            document.getElementById('langToggleBtn').innerText = currentLang === 'bn' ? 'EN' : 'বাং';
+            // Basic language update can be added here if needed
+        }
+
+        // --- Check Session on Load ---
         if(localStorage.getItem('landSession')) {
             const session = JSON.parse(localStorage.getItem('landSession'));
             currentUser = { name: session.user };
