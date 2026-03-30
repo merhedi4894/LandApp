@@ -17,7 +17,7 @@
         .btn-primary { background: linear-gradient(135deg, #1e3a5f, #2d5a87); }
         .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
         .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669'); }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 15px; }
         .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #0ea5e9; max-height: 200px; overflow-y: auto; z-index: 50; border-radius: 0 0 8px 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
     </style>
@@ -189,29 +189,61 @@
         
         const logout = () => { clearTimeout(idleTimer); localStorage.removeItem('s'); location.reload(); };
 
-        // Load Data
+        // Load Data (Updated with Auto Refresh Logic)
         async function init() {
             const d = await api('/api/getInitData');
             profiles = d.profiles || [];
-            const opt = d.searchOptions || {}; names = opt.names || []; sMap = opt.landMap || {}; yMap = opt.yearMap || {};
+            const opt = d.searchOptions || {}; 
+            names = opt.names || []; 
+            sMap = opt.landMap || {}; 
+            yMap = opt.yearMap || {};
+            
+            // Entry Dropdown
             const ndd = document.getElementById('nameDD'); ndd.innerHTML = ''; [...new Set(profiles.map(p => p.name))].forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
+            
+            // Search Dropdown List
             const sdd = document.getElementById('searchDD'); sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`; names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
+
+            // *** NEW LOGIC: Update Active Dropdowns based on current selection ***
+            const currentName = document.getElementById('searchNameVal').value;
+            
+            if (currentName === 'ALL') {
+                // Reset Land/Year to basic state if "All Names" is selected
+                const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>';
+                const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>';
+            } else {
+                // A specific name is selected. Check if it still exists.
+                if (names.includes(currentName)) {
+                    // Update Land Dropdown
+                    const lSel = document.getElementById('searchLand');
+                    const currentLand = lSel.value; // Remember current selection
+                    lSel.innerHTML = '<option value="ALL">All Lands</option>';
+                    if (sMap[currentName]) sMap[currentName].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`);
+                    // Restore selection if still valid, else reset to ALL
+                    if (currentLand !== 'ALL' && !sMap[currentName]?.includes(parseFloat(currentLand))) lSel.value = "ALL"; else lSel.value = currentLand;
+
+                    // Update Year Dropdown
+                    const ySel = document.getElementById('searchYear');
+                    const currentYear = ySel.value; 
+                    ySel.innerHTML = '<option value="ALL">All Years</option>';
+                    if (yMap[currentName]) yMap[currentName].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`);
+                    // Restore selection if still valid, else reset to ALL
+                    if (currentYear !== 'ALL' && !yMap[currentName]?.includes(currentYear)) ySel.value = "ALL"; else ySel.value = currentYear;
+                } else {
+                    // Name was deleted entirely! Reset everything.
+                    resetSearchDropdowns();
+                }
+            }
+
             if (!document.getElementById('settingsModal').classList.contains('hidden')) renderS_tbl(); setLang();
         }
 
-        // --- Reset Search Dropdowns Function (New) ---
+        // --- Reset Search Dropdowns Function ---
         function resetSearchDropdowns() {
-            // Reset Name Input
             document.getElementById('searchNameVal').value = 'ALL';
             document.getElementById('searchName').value = 'All Names';
-            
-            // Reset Land Dropdown
-            const lSel = document.getElementById('searchLand');
-            lSel.innerHTML = '<option value="ALL">All Lands</option>';
-            
-            // Reset Year Dropdown
-            const ySel = document.getElementById('searchYear');
-            ySel.innerHTML = '<option value="ALL">All Years</option>';
+            const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>';
+            const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>';
         }
 
         // Entry Logic
@@ -230,16 +262,12 @@
         // Search Logic
         const setSearchName = (v, t) => { document.getElementById('searchNameVal').value = v; document.getElementById('searchName').value = t; document.getElementById('searchDD').classList.add('hidden'); const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>'; if (v !== 'ALL' && sMap[v]) sMap[v].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`); const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>'; if (v !== 'ALL' && yMap[v]) yMap[v].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`); };
 
-        // Due Logic (Fixed)
+        // Due Logic
         const getDue = async () => {
-            const nameVal = document.getElementById('searchNameVal').value;
-            const landVal = document.getElementById('searchLand').value;
-            const yearVal = document.getElementById('searchYear').value;
-
+            const nameVal = document.getElementById('searchNameVal').value; const landVal = document.getElementById('searchLand').value; const yearVal = document.getElementById('searchYear').value;
             const query = { name: nameVal, land: landVal, year: toEnglishDigits(yearVal) };
             const d = await api('/api/getReportData', query);
             document.getElementById('resultArea').classList.remove('hidden'); document.getElementById('statusCard').classList.remove('hidden'); document.getElementById('dataCard').classList.add('hidden');
-
             if (d.records.length > 0) {
                 const groups = {};
                 d.records.forEach(r => { const yr = r.hariYear || r.year; const key = `${r.name}_${r.land}_${yr}`; if(!groups[key]) groups[key] = { name: r.name, land: r.land, year: yr, total: 0, paid: 0 }; if(groups[key].total === 0) groups[key].total = parseFloat(r.total); groups[key].paid += parseFloat(r.given); });
@@ -265,18 +293,14 @@
             else d.records.forEach(r => tb.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 border">${r.date}</td><td class="p-2 border">${r.name}</td><td class="p-2 border text-center">${r.land}</td><td class="p-2 border text-center">${r.rate}</td><td class="p-2 border text-right">${r.total}</td><td class="p-2 border text-right">${r.given}</td><td class="p-2 border text-center">${r.hariYear || r.year}</td></tr>`);
         };
 
-        // Delete Logic (Fixed to Reset Dropdowns)
+        // Delete Logic
         const delData = async () => {
             const n = document.getElementById('searchNameVal').value; const y = document.getElementById('searchYear').value;
             if (n === 'ALL' || y === 'ALL') return alert('Select specific name/year');
             if(confirm('Delete?')) {
                 const res = await api('/api/deleteRecords', { name: n, year: toEnglishDigits(y) });
-                if(res.success) {
-                    document.getElementById('resultArea').classList.add('hidden');
-                    await init(); // Reload all data from server
-                    resetSearchDropdowns(); // Reset UI dropdowns to "ALL"
-                    alert("Deleted successfully!");
-                } else { alert("Error deleting data."); }
+                if(res.success) { document.getElementById('resultArea').classList.add('hidden'); await init(); resetSearchDropdowns(); alert("Deleted successfully!"); }
+                else { alert("Error deleting data."); }
             }
         };
 
