@@ -3,135 +3,340 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Record Search</title>
+    <title>ভূমি লিজ ব্যবস্থাপনা</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> tailwind.config = { theme: { extend: { colors: { primary: '#1e3a5f', accent: '#0ea5e9' } } } } </script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f4f4f4;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 300px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        select {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #218838;
-        }
+        * { font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 100%); min-height: 100vh; }
+        .input-field { transition: all 0.2s; border: 2px solid #e2e8f0; }
+        .input-field:focus { border-color: #0ea5e9; outline: none; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15); }
+        .btn { transition: all 0.2s; color: white; }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-primary { background: linear-gradient(135deg, #1e3a5f, #2d5a87'); }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626'); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669'); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 15px; }
+        .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #0ea5e9; max-height: 200px; overflow-y: auto; z-index: 50; border-radius: 0 0 8px 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
     </style>
 </head>
-<body>
+<body class="p-2 sm:p-4 md:p-6">
 
-<div class="container">
-    <h2>রেকর্ড সার্চ</h2>
-    <form id="searchForm">
-        <div class="form-group">
-            <label for="name">Name:</label>
-            <select id="name">
-                <option value="">-- নাম নির্বাচন করুন --</option>
-                <!-- জাভাস্ক্রিপ্ট দিয়ে ডাটা এখানে আসবে -->
-            </select>
+    <!-- LOGIN -->
+    <div id="loginSection" class="max-w-md mx-auto">
+        <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 text-center">
+            <div class="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-primary shadow-lg flex items-center justify-center bg-gray-100">
+                <img src="https://i.imgur.com/8CJlOgq.png" alt="User" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\'text-4xl text-primary\'>👤</span>'">
+            </div>
+            <h2 class="text-2xl font-bold text-primary mb-6" data-lang="login_title">Login</h2>
+            <form id="loginForm">
+                <input type="text" id="username" value="mehedi4894" class="input-field w-full px-4 py-3 rounded-lg mb-4 bg-gray-100 font-semibold" required>
+                <input type="password" id="password" placeholder="Password" class="input-field w-full px-4 py-3 rounded-lg mb-4" required>
+                <div id="loginError" class="hidden text-red-500 text-sm mb-3"></div>
+                <button type="submit" class="btn btn-primary w-full py-3 rounded-lg font-semibold" data-lang="login_btn">Login</button>
+            </form>
         </div>
+    </div>
 
-        <div class="form-group">
-            <label for="land">Land:</label>
-            <select id="land">
-                <option value="">-- জমির পরিমাণ --</option>
-                <!-- জাভাস্ক্রিপ্ট দিয়ে ডাটা এখানে আসবে -->
-            </select>
+    <!-- APP -->
+    <div id="appSection" class="hidden max-w-5xl mx-auto">
+        <div class="bg-primary rounded-t-2xl p-4 text-white flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                 <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white hidden sm:block">
+                    <img src="https://i.imgur.com/8CJlOgq.png" alt="User" class="w-full h-full object-cover" onerror="this.style.display='none'">
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold" data-lang="app_title">ভূমি লিজ ব্যবস্থাপনা</h1>
+                    <p class="text-sm text-blue-200">মো: মেহেদী হাসান</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="toggleLang()" id="langBtn" class="btn bg-yellow-500 text-black px-3 py-2 rounded-lg text-sm font-bold">EN</button>
+                <button onclick="openSettings()" class="btn bg-white text-primary px-3 py-2 rounded-lg text-sm font-bold" data-lang="settings_btn">Settings</button>
+                <button onclick="logout()" class="btn bg-red-500/80 px-3 py-2 rounded-lg text-sm" data-lang="logout_btn">Logout</button>
+            </div>
         </div>
+        
+        <div class="bg-white rounded-b-2xl shadow-xl p-4 sm:p-6">
+            <!-- Entry Form -->
+            <div class="border-b pb-4 mb-4">
+                <h3 class="font-bold text-primary mb-3" data-lang="new_entry_title">New Entry</h3>
+                <form id="landForm" class="grid grid-cols-2 md:grid-cols-8 gap-3 items-end">
+                    <div class="relative col-span-2">
+                        <label class="text-xs font-semibold text-gray-600" data-lang="name">নাম</label>
+                        <input type="text" id="entryName" class="input-field w-full px-3 py-2 rounded-lg bg-white" autocomplete="off" required>
+                        <div id="nameDD" class="hidden dropdown-list"></div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-600" data-lang="land">জমি</label>
+                        <select id="entryLand" class="input-field w-full px-3 py-2 rounded-lg bg-white" required onchange="updateRate()"><option value="">Select</option></select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-600" data-lang="hari_calc">হারি গণনা</label>
+                        <input type="text" id="entryHari" class="input-field w-full px-3 py-2 rounded-lg bg-gray-100" readonly>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-600" data-lang="rate">রেট</label>
+                        <select id="entryRate" class="input-field w-full px-3 py-2 rounded-lg bg-white" required><option value="">Select</option></select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-600" data-lang="tk_given">টাকা</label>
+                        <input type="text" id="entryTk" class="input-field w-full px-3 py-2 rounded-lg" placeholder="e.g. 500">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-600" data-lang="lease_year">বছর</label>
+                        <input type="text" id="entryYear" class="input-field w-full px-3 py-2 rounded-lg bg-white" placeholder="e.g. 2025">
+                    </div>
+                    <div><button type="submit" class="btn btn-primary w-full py-2 rounded-lg font-semibold" data-lang="save_btn">Save</button></div>
+                </form>
+                <div id="msg" class="hidden text-green-600 text-center text-sm mt-2 font-semibold" data-lang="save_success">Saved!</div>
+            </div>
 
-        <div class="form-group">
-            <label for="year">Year:</label>
-            <select id="year">
-                <option value="">-- সাল নির্বাচন করুন --</option>
-                <!-- জাভাস্ক্রিপ্ট দিয়ে ডাটা এখানে আসবে -->
-            </select>
+            <!-- Search -->
+            <div>
+                <h3 class="font-bold text-primary mb-3" data-lang="search_title">Search</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3">
+                    <div class="relative">
+                        <input type="text" id="searchName" placeholder="Name" class="input-field w-full px-3 py-2 rounded-lg bg-white" autocomplete="off">
+                        <input type="hidden" id="searchNameVal" value="ALL">
+                        <div id="searchDD" class="hidden dropdown-list"></div>
+                    </div>
+                    <select id="searchLand" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL" data-lang="all_lands">All Lands</option></select>
+                    <select id="searchYear" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL" data-lang="all_years">All Years</option></select>
+                    <div class="flex gap-2">
+                        <button onclick="getDue()" class="btn btn-success px-3 rounded-lg flex-1" data-lang="due_btn">Due</button>
+                        <button onclick="getData()" class="btn bg-purple-600 px-3 rounded-lg flex-1" data-lang="data_btn">Data</button>
+                        <button onclick="delData()" class="btn btn-danger px-3 rounded-lg" data-lang="del_btn">Del</button>
+                    </div>
+                </div>
+                <div id="resultArea" class="hidden mt-4">
+                    <div id="statusCard" class="hidden p-4 bg-blue-50 border rounded-xl"></div>
+                    <div id="dataCard" class="hidden overflow-x-auto border rounded-lg">
+                        <table class="w-full text-xs border-collapse">
+                            <thead class="bg-gray-100"><tr>
+                                <th class="p-2 border" data-lang="t_date">Date</th><th class="p-2 border" data-lang="t_name">Name</th><th class="p-2 border" data-lang="t_land">Land</th>
+                                <th class="p-2 border" data-lang="t_rate">Rate</th><th class="p-2 border" data-lang="t_total">Total</th><th class="p-2 border" data-lang="t_given">Given</th><th class="p-2 border" data-lang="t_year">Year</th>
+                            </tr></thead>
+                            <tbody id="tBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <button type="submit">Search</button>
-    </form>
-</div>
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="hidden modal-overlay">
+        <div class="bg-white rounded-2xl w-full max-w-3xl m-4 max-h-[90vh] flex flex-col">
+            <div class="p-4 border-b bg-primary text-white rounded-t-2xl flex justify-between">
+                <h3 class="font-bold" data-lang="settings_title">Settings: Profiles</h3>
+                <button onclick="closeSettings()" class="text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                    <input type="text" id="sName" placeholder="Name" class="input-field px-3 py-2 rounded-lg">
+                    <input type="number" id="sLand" placeholder="Land" class="input-field px-3 py-2 rounded-lg">
+                    <input type="text" id="sHari" placeholder="Eg: বৈশাখ" class="input-field px-3 py-2 rounded-lg">
+                    <input type="number" id="sRate" placeholder="Rate" class="input-field px-3 py-2 rounded-lg">
+                    <input type="hidden" id="sOldName"><input type="hidden" id="sOldLand"><input type="hidden" id="sOldRate">
+                    <button onclick="saveProfile()" class="btn btn-primary px-4 rounded-lg col-span-2 md:col-span-1" data-lang="save_btn">Save</button>
+                </div>
+                <h4 class="font-bold text-gray-700 mb-2" data-lang="saved_pro">Saved Profiles</h4>
+                <div class="overflow-x-auto border rounded-lg">
+                    <table class="w-full text-sm border-collapse min-w-[500px]">
+                        <thead class="bg-gray-100"><tr>
+                            <th class="p-2 border text-left" data-lang="name">Name</th><th class="p-2 border" data-lang="land">Land</th>
+                            <th class="p-2 border" data-lang="hari_start">Start</th><th class="p-2 border" data-lang="rate">Rate</th><th class="p-2 border" data-lang="action">Action</th>
+                        </tr></thead>
+                        <tbody id="sTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<script>
-    // ১. ডামি ডাটাবেস ডাটা (এখানে আপনার আসল ডাটা লোড হবে)
-    const records = [
-        { name: "Rahim", land: "52", year: "2024" },
-        { name: "Mosto", land: "53", year: "2025" },
-        { name: "Karim", land: "54", year: "2026" },
-        { name: "Mosto", land: "53", year: "2025" } // ডুপ্লিকেট ডাটা
-    ];
+    <script>
+        // Language System
+        let lang = 'bn';
+        const trans = {
+            bn: { login_title: "লগইন", login_btn: "লগইন করুন", app_title: "ভূমি লিজ ব্যবস্থাপনা", settings_btn: "সেটিংস", logout_btn: "লগআউট", new_entry_title: "নতুন এন্ট্রি", name: "নাম", land: "জমি", hari_calc: "হারি গণনা", rate: "রেট", tk_given: "টাকা", lease_year: "বছর", save_btn: "সেভ", save_success: "সেভ হয়েছে!", search_title: "সার্চ", all_lands: "সব জমি", all_years: "সব বছর", due_btn: "বকেয়া", data_btn: "ডাটা", del_btn: "ডিল", t_date: "তারিখ", t_name: "নাম", t_land: "জমি", t_rate: "রেট", t_total: "মোট", t_given: "দেওয়া", t_year: "বছর", settings_title: "সেটিংস: প্রোফাইল", saved_pro: "সেভ করা প্রোফাইল", hari_start: "শুরু", action: "অ্যাকশন" },
+            en: { login_title: "Login", login_btn: "Login", app_title: "Land Lease Management", settings_btn: "Settings", logout_btn: "Logout", new_entry_title: "New Entry", name: "Name", land: "Land", hari_calc: "Lease Calc", rate: "Rate", tk_given: "Amount", lease_year: "Year", save_btn: "Save", save_success: "Saved!", search_title: "Search", all_lands: "All Lands", all_years: "All Years", due_btn: "Due", data_btn: "Data", del_btn: "Del", t_date: "Date", t_name: "Name", t_land: "Land", t_rate: "Rate", t_total: "Total", t_given: "Given", t_year: "Year", settings_title: "Settings: Profiles", saved_pro: "Saved Profiles", hari_start: "Start", action: "Action" }
+        };
 
-    // ২. ইউনিক ভ্যালু বের করার ফাংশন
-    function populateDropdown(elementId, key) {
-        const select = document.getElementById(elementId);
+        const setLang = () => { document.querySelectorAll('[data-lang]').forEach(el => { const k = el.getAttribute('data-lang'); if(trans[lang][k]) el.innerText = trans[lang][k]; }); document.getElementById('langBtn').innerText = lang === 'bn' ? 'EN' : 'বাং'; };
+        const toggleLang = () => { lang = lang === 'bn' ? 'en' : 'bn'; setLang(); };
+
+        let user = null, profiles = [], sMap = {}, yMap = {}, names = [];
         
-        // ডাটা থেকে নির্দিষ্ট ফিল্ডের ভ্যালু বের করা
-        const values = records.map(item => item[key]);
+        const toEnglishDigits = (str) => { if (!str) return str; const map = { '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4', '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9' }; return String(str).replace(/[০-৯]/g, d => map[d]); };
         
-        // ডুপ্লিকেট রিমুভ করা (Set ব্যবহার করে)
-        const uniqueValues = [...new Set(values)];
+        // --- AUTO LOGOUT (10 Min) ---
+        const IDLE_TIMEOUT = 10 * 60 * 1000; let idleTimer;
+        function startIdleMonitor() { window.addEventListener('mousemove', resetIdleTimer, true); window.addEventListener('mousedown', resetIdleTimer, true); window.addEventListener('keypress', resetIdleTimer, true); window.addEventListener('touchmove', resetIdleTimer, true); window.addEventListener('scroll', resetIdleTimer, true); resetIdleTimer(); }
+        function resetIdleTimer() { clearTimeout(idleTimer); idleTimer = setTimeout(logout, IDLE_TIMEOUT); }
+
+        const api = (url, data = {}) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(r => r.json());
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const res = await api('/api/login', { username: document.getElementById('username').value, password: document.getElementById('password').value });
+            if (res.success) { user = res.user; localStorage.setItem('s', JSON.stringify({ u: user.name })); document.getElementById('loginSection').classList.add('hidden'); document.getElementById('appSection').classList.remove('hidden'); init(); startIdleMonitor(); }
+            else { document.getElementById('loginError').classList.remove('hidden'); document.getElementById('loginError').innerText = res.message; }
+        });
         
-        // সর্টিং (ছোট থেকে বড়)
-        uniqueValues.sort((a, b) => {
-            if (key === 'land' || key === 'year') return a - b; // সংখ্যার জন্য
-            return a.localeCompare(b); // নামের জন্য
+        const logout = () => { clearTimeout(idleTimer); localStorage.removeItem('s'); location.reload(); };
+
+        // Load Data
+        async function init() {
+            const d = await api('/api/getInitData');
+            profiles = d.profiles || [];
+            const opt = d.searchOptions || {}; 
+            names = opt.names || []; 
+            sMap = opt.landMap || {}; 
+            yMap = opt.yearMap || {};
+            
+            // Entry Dropdown
+            const ndd = document.getElementById('nameDD'); ndd.innerHTML = ''; [...new Set(profiles.map(p => p.name))].forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
+            
+            // Search Dropdown List
+            const sdd = document.getElementById('searchDD'); sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`; names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
+
+            // *** UPDATE ACTIVE DROPDOWNS ***
+            const currentName = document.getElementById('searchNameVal').value;
+            
+            // Refresh Name Input if deleted
+            if (currentName !== 'ALL' && !names.includes(currentName)) {
+                resetSearchDropdowns();
+            } 
+            else if (currentName === 'ALL') {
+                // If All Names selected, reset Land/Year to default
+                const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>';
+                const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>';
+            } 
+            else {
+                // Specific Name Selected: Update Land & Year dropdowns based on new data
+                const lSel = document.getElementById('searchLand');
+                const currentLand = lSel.value;
+                lSel.innerHTML = '<option value="ALL">All Lands</option>';
+                if (sMap[currentName]) sMap[currentName].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`);
+                // Keep selection if exists, else reset
+                if (!sMap[currentName]?.includes(parseFloat(currentLand))) lSel.value = "ALL"; else lSel.value = currentLand;
+
+                const ySel = document.getElementById('searchYear');
+                const currentYear = ySel.value;
+                ySel.innerHTML = '<option value="ALL">All Years</option>';
+                if (yMap[currentName]) yMap[currentName].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`);
+                // Keep selection if exists, else reset
+                if (!yMap[currentName]?.includes(currentYear)) ySel.value = "ALL"; else ySel.value = currentYear;
+            }
+
+            if (!document.getElementById('settingsModal').classList.contains('hidden')) renderS_tbl(); setLang();
+        }
+
+        // --- Reset Search Dropdowns Function ---
+        function resetSearchDropdowns() {
+            document.getElementById('searchNameVal').value = 'ALL';
+            document.getElementById('searchName').value = 'All Names';
+            const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>';
+            const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>';
+        }
+
+        // Entry Logic
+        const setEntryName = n => { document.getElementById('entryName').value = n; document.getElementById('nameDD').classList.add('hidden'); const m = profiles.filter(p => p.name === n); const lSel = document.getElementById('entryLand'); lSel.innerHTML = '<option value="">Select</option>'; m.forEach(p => lSel.innerHTML += `<option value="${p.land}">${p.land}</option>`); if (m.length === 1) { lSel.value = m[0].land; updateRate(); } };
+        const updateRate = () => { const n = document.getElementById('entryName').value, l = document.getElementById('entryLand').value; const p = profiles.find(x => x.name === n && x.land == l); if (p) { document.getElementById('entryRate').innerHTML = `<option value="${p.rate}">${p.rate}</option>`; document.getElementById('entryRate').value = p.rate; document.getElementById('entryHari').value = p.hariBorsho || "-"; } };
+
+        document.getElementById('landForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const d = { name: document.getElementById('entryName').value, land: document.getElementById('entryLand').value, rate: document.getElementById('entryRate').value, tkGiven: toEnglishDigits(document.getElementById('entryTk').value), hariYear: toEnglishDigits(document.getElementById('entryYear').value), loggedInUser: user.name };
+            if (!d.name || !d.land || !d.rate) return alert("Fill fields");
+            const res = await api('/api/saveFormData', d);
+            if (res.success) { document.getElementById('msg').classList.remove('hidden'); e.target.reset(); setTimeout(() => document.getElementById('msg').classList.add('hidden'), 1500); init(); }
+            else alert("Error");
         });
 
-        // ড্রপডাউনে অপশন যোগ করা
-        uniqueValues.forEach(value => {
-            const option = document.createElement('option');
-            option.value = value;
-            option.textContent = value;
-            select.appendChild(option);
-        });
-    }
+        // Search Logic
+        const setSearchName = (v, t) => { document.getElementById('searchNameVal').value = v; document.getElementById('searchName').value = t; document.getElementById('searchDD').classList.add('hidden'); const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>'; if (v !== 'ALL' && sMap[v]) sMap[v].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`); const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>'; if (v !== 'ALL' && yMap[v]) yMap[v].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`); };
 
-    // ৩. পেজ লোড হলে ড্রপডাউন ফিল করা
-    document.addEventListener('DOMContentLoaded', () => {
-        populateDropdown('name', 'name');
-        populateDropdown('land', 'land');
-        populateDropdown('year', 'year');
-    });
+        // Due Logic (UPDATED: Hides Paid Years for Specific Name)
+        const getDue = async () => {
+            const nameVal = document.getElementById('searchNameVal').value; const landVal = document.getElementById('searchLand').value; const yearVal = document.getElementById('searchYear').value;
+            const query = { name: nameVal, land: landVal, year: toEnglishDigits(yearVal) };
+            const d = await api('/api/getReportData', query);
+            document.getElementById('resultArea').classList.remove('hidden'); document.getElementById('statusCard').classList.remove('hidden'); document.getElementById('dataCard').classList.add('hidden');
 
-    // সার্চ ফর্ম সাবমিট হ্যান্ডলার
-    document.getElementById('searchForm').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = document.getElementById('name').value;
-        const land = document.getElementById('land').value;
-        const year = document.getElementById('year').value;
-        
-        console.log(`Searching: Name=${name}, Land=${land}, Year=${year}`);
-        alert(`Searching: \nName: ${name}\nLand: ${land}\nYear: ${year}`);
-    });
-</script>
+            if (d.records.length > 0) {
+                const groups = {};
+                d.records.forEach(r => { const yr = r.hariYear || r.year; const key = `${r.name}_${r.land}_${yr}`; if(!groups[key]) groups[key] = { name: r.name, land: r.land, year: yr, total: 0, paid: 0 }; if(groups[key].total === 0) groups[key].total = parseFloat(r.total); groups[key].paid += parseFloat(r.given); });
+                let html = '<div class="space-y-2">';
+                
+                if (nameVal !== 'ALL') {
+                    // SPECIFIC NAME SELECTED
+                    let hasContent = false;
+                    Object.values(groups).forEach(g => { 
+                        const due = g.total - g.paid;
+                        // Only show if DUE > 30
+                        if (due > 30) { 
+                            hasContent = true;
+                            html += `<div class="p-3 bg-red-50 border-l-4 border-red-500 rounded shadow-sm"><p class="font-bold text-red-700">${g.name}</p><p class="text-sm">${g.year} সাল, ${g.land} শতাংশ জমির বকেয়া: <span class="font-bold">${due.toFixed(2)} টাকা</span></p></div>`; 
+                        }
+                    });
+                    if(!hasContent) html += '<p class="text-center text-green-600 font-bold py-4">কোনো বকেয়া নেই। সব পরিশোধ হয়েছে।</p>';
+                } else {
+                    // ALL NAMES SELECTED
+                    let foundDue = false; 
+                    Object.values(groups).forEach(g => { 
+                        const due = g.total - g.paid;
+                        if (due > 30) { 
+                            foundDue = true; 
+                            html += `<div class="p-3 bg-red-50 border-l-4 border-red-500 rounded shadow-sm"><p class="font-bold text-red-700">${g.name} (${g.year}) - ${g.land} শতাংশ</p><p class="text-sm">বকেয়া: <span class="font-bold">${due.toFixed(2)} টাকা</span></p></div>`; 
+                        } 
+                    });
+                    if(!foundDue) html += '<p class="text-center text-green-600 font-bold py-4">কারো বকেয়া নেই!</p>';
+                }
+                html += '</div>'; document.getElementById('statusCard').innerHTML = html;
+            } else { document.getElementById('statusCard').innerHTML = '<p class="text-center text-gray-500 py-4">কোনো ডাটা পাওয়া যায়নি</p>'; }
+        };
 
+        // Data Logic
+        const getData = async () => {
+            const name = document.getElementById('searchNameVal').value; const year = document.getElementById('searchYear').value;
+            if (name === 'ALL' || year === 'ALL') { alert('ডাটা দেখতে নির্দিষ্ট নাম এবং বছর সিলেক্ট করুন।'); return; }
+            const d = await api('/api/getReportData', { name: name, land: document.getElementById('searchLand').value, year: toEnglishDigits(year) });
+            document.getElementById('resultArea').classList.remove('hidden'); document.getElementById('statusCard').classList.add('hidden'); document.getElementById('dataCard').classList.remove('hidden');
+            const tb = document.getElementById('tBody'); tb.innerHTML = '';
+            if(d.records.length === 0) tb.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-400">No Data</td></tr>';
+            else d.records.forEach(r => tb.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 border">${r.date}</td><td class="p-2 border">${r.name}</td><td class="p-2 border text-center">${r.land}</td><td class="p-2 border text-center">${r.rate}</td><td class="p-2 border text-right">${r.total}</td><td class="p-2 border text-right">${r.given}</td><td class="p-2 border text-center">${r.hariYear || r.year}</td></tr>`);
+        };
+
+        // Delete Logic
+        const delData = async () => {
+            const n = document.getElementById('searchNameVal').value; const y = document.getElementById('searchYear').value;
+            if (n === 'ALL' || y === 'ALL') return alert('Select specific name/year');
+            if(confirm('Delete?')) {
+                const res = await api('/api/deleteRecords', { name: n, year: toEnglishDigits(y) });
+                if(res.success) { document.getElementById('resultArea').classList.add('hidden'); await init(); resetSearchDropdowns(); alert("Deleted successfully!"); }
+                else { alert("Error deleting data."); }
+            }
+        };
+
+        // Settings Logic
+        const openSettings = () => { document.getElementById('settingsModal').classList.remove('hidden'); renderS_tbl(); };
+        const closeSettings = () => document.getElementById('settingsModal').classList.add('hidden');
+        const renderS_tbl = () => { const tb = document.getElementById('sTable'); tb.innerHTML = ''; if (profiles.length === 0) tb.innerHTML = '<tr><td colspan="5" class="text-center text-gray-400 p-4">No Profiles</td></tr>'; else profiles.forEach(p => tb.innerHTML += `<tr class="border-b hover:bg-gray-50"><td class="p-3 border font-semibold">${p.name}</td><td class="p-3 border text-center">${p.land}</td><td class="p-3 border text-center">${p.hariBorsho || "-"}</td><td class="p-3 border text-center">${p.rate}</td><td class="p-3 border text-center flex gap-1 justify-center"><button onclick="editP('${p.name}', '${p.land}', '${p.rate}', '${p.hariBorsho||''}')" class="btn btn-warning px-3 py-1 rounded text-xs">Edit</button><button onclick="delP('${p.name}', '${p.land}', '${p.rate}')" class="btn btn-danger px-1.5 py-0.5 rounded text-[10px] leading-tight">Del</button></td></tr>`); };
+        const editP = (n, l, r, h) => { document.getElementById('sName').value = n; document.getElementById('sLand').value = l; document.getElementById('sRate').value = r; document.getElementById('sHari').value = h; document.getElementById('sOldName').value = n; document.getElementById('sOldLand').value = l; document.getElementById('sOldRate').value = r; };
+        const saveProfile = async () => { const d = { name: document.getElementById('sName').value, land: document.getElementById('sLand').value, rate: document.getElementById('sRate').value, hariBorsho: document.getElementById('sHari').value, oldName: document.getElementById('sOldName').value, oldLand: document.getElementById('sOldLand').value, oldRate: document.getElementById('sOldRate').value }; if (!d.name || !d.land || !d.rate) return alert("Fill Name, Land, Rate"); const res = await api('/api/saveProfile', d); if (res.success) { await init(); renderS_tbl(); document.getElementById('sName').value = ''; document.getElementById('sLand').value = ''; document.getElementById('sRate').value = ''; document.getElementById('sHari').value = ''; document.getElementById('sOldName').value = ''; document.getElementById('sOldLand').value = ''; document.getElementById('sOldRate').value = ''; alert("Saved!"); } else alert("Error: " + res.message); };
+        const delP = async (n, l, r) => { if(confirm('Delete Profile?')) { const res = await api('/api/deleteProfile', { name: n, land: l, rate: r }); if(res.success) { await init(); renderS_tbl(); resetSearchDropdowns(); alert("Profile Deleted"); } } };
+
+        // Listeners
+        document.getElementById('entryName').addEventListener('focus', function() { document.getElementById('nameDD').classList.remove('hidden'); this.select(); });
+        document.getElementById('searchName').addEventListener('focus', function() { document.getElementById('searchDD').classList.remove('hidden'); this.select(); });
+        document.addEventListener('click', e => { if (!e.target.closest('#entryName') && !e.target.closest('#nameDD')) document.getElementById('nameDD').classList.add('hidden'); if (!e.target.closest('#searchName') && !e.target.closest('#searchDD')) document.getElementById('searchDD').classList.add('hidden'); });
+
+        // Session Check
+        if (localStorage.getItem('s')) { const s = JSON.parse(localStorage.getItem('s')); user = { name: s.u }; document.getElementById('loginSection').classList.add('hidden'); document.getElementById('appSection').classList.remove('hidden'); init(); startIdleMonitor(); }
+    </script>
 </body>
 </html>
