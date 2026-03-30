@@ -186,18 +186,17 @@
         let idleTimer;
 
         function startIdleMonitor() {
-            // Reset timer on specific events
             window.addEventListener('mousemove', resetIdleTimer, true);
             window.addEventListener('mousedown', resetIdleTimer, true);
             window.addEventListener('keypress', resetIdleTimer, true);
             window.addEventListener('touchmove', resetIdleTimer, true);
             window.addEventListener('scroll', resetIdleTimer, true);
-            resetIdleTimer(); // Start initial timer
+            resetIdleTimer();
         }
 
         function resetIdleTimer() {
-            clearTimeout(idleTimer); // Clear previous timer
-            idleTimer = setTimeout(logout, IDLE_TIMEOUT); // Set new timer
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(logout, IDLE_TIMEOUT);
         }
         // --------------------------------------
 
@@ -213,7 +212,7 @@
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('appSection').classList.remove('hidden');
                 init();
-                startIdleMonitor(); // Start monitoring on login
+                startIdleMonitor();
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
                 document.getElementById('loginError').innerText = res.message;
@@ -221,7 +220,7 @@
         });
         
         const logout = () => { 
-            clearTimeout(idleTimer); // Stop timer on logout
+            clearTimeout(idleTimer);
             localStorage.removeItem('s'); 
             location.reload(); 
         };
@@ -245,7 +244,9 @@
             sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`;
             names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
 
+            // Settings Table Update (Conditional)
             if (!document.getElementById('settingsModal').classList.contains('hidden')) renderS_tbl();
+            
             setLang();
         }
 
@@ -385,7 +386,7 @@
             }
         };
 
-        // --- Settings Logic ---
+        // --- Settings Logic (Fixed) ---
         const openSettings = () => { document.getElementById('settingsModal').classList.remove('hidden'); renderS_tbl(); };
         const closeSettings = () => document.getElementById('settingsModal').classList.add('hidden');
         
@@ -416,7 +417,8 @@
             if (!d.name || !d.land || !d.rate) return alert("Fill Name, Land, Rate");
             const res = await api('/api/saveProfile', d);
             if (res.success) {
-                await init();
+                await init(); // Data Load holo
+                renderS_tbl(); // Table explicitly update holo
                 document.getElementById('sName').value = ''; document.getElementById('sLand').value = ''; document.getElementById('sRate').value = ''; document.getElementById('sHari').value = '';
                 document.getElementById('sOldName').value = ''; document.getElementById('sOldLand').value = ''; document.getElementById('sOldRate').value = '';
                 alert("Saved!");
@@ -427,6 +429,7 @@
             if(confirm('Delete Profile?')) {
                 await api('/api/deleteProfile', { name: n, land: l, rate: r });
                 await init();
+                renderS_tbl(); // Table explicitly update holo
             }
         };
 
@@ -445,7 +448,7 @@
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('appSection').classList.remove('hidden');
             init();
-            startIdleMonitor(); // Start monitoring if already logged in
+            startIdleMonitor();
         }
     </script>
 </body>
