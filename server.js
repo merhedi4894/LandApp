@@ -15,14 +15,8 @@ app.use(express.static('public'));
 
 // --- MongoDB Connection ---
 const MONGO_URI = process.env.MONGO_URI;
-if (!MONGO_URI) {
-    console.error("Error: MONGO_URI not found.");
-    process.exit(1);
-}
-
-mongoose.connect(MONGO_URI)
-    .then(() => console.log('MongoDB Connected!'))
-    .catch(err => console.error('MongoDB Error:', err));
+if (!MONGO_URI) { console.error("Error: MONGO_URI not found."); process.exit(1); }
+mongoose.connect(MONGO_URI).then(() => console.log('MongoDB Connected!')).catch(err => console.error('MongoDB Error:', err));
 
 // --- Helper Functions ---
 function toEnglishDigits(str) {
@@ -30,12 +24,7 @@ function toEnglishDigits(str) {
     const map = { '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4', '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9' };
     return String(str).replace(/[০-৯]/g, d => map[d] || d);
 }
-
-function getYearSafe(dateVal) {
-    if (!dateVal) return "";
-    try { const d = new Date(dateVal); if (isNaN(d.getTime())) return ""; return d.getFullYear().toString(); } 
-    catch (e) { return ""; }
-}
+function getYearSafe(dateVal) { if (!dateVal) return ""; try { const d = new Date(dateVal); if (isNaN(d.getTime())) return ""; return d.getFullYear().toString(); } catch (e) { return ""; } }
 
 // --- Routes ---
 app.post('/api/login', (req, res) => {
@@ -75,8 +64,7 @@ app.post('/api/getInitData', async (req, res) => {
 });
 
 app.post('/api/getReportData', async (req, res) => {
-    const sd = req.body;
-    let query = {};
+    const sd = req.body; let query = {};
     const cleanSearchYear = toEnglishDigits(sd.year);
     if (sd.name !== "ALL") query.name = sd.name;
     if (sd.land !== "ALL") query.land = parseFloat(sd.land);
@@ -91,8 +79,7 @@ app.post('/api/deleteRecords', async (req, res) => {
     const { name, year } = req.body;
     const cleanYear = toEnglishDigits(year);
     if (name === "ALL" || cleanYear === "ALL") return res.json({ success: false, message: "Select specific." });
-    try { await LandData.deleteMany({ name, hariYear: cleanYear }); res.json({ success: true, message: "Deleted" }); }
-    catch (e) { res.json({ success: false, message: e.toString() }); }
+    try { await LandData.deleteMany({ name, hariYear: cleanYear }); res.json({ success: true, message: "Deleted" }); } catch (e) { res.json({ success: false, message: e.toString() }); }
 });
 
 app.post('/api/saveProfile', async (req, res) => {
@@ -111,8 +98,7 @@ app.post('/api/saveProfile', async (req, res) => {
 });
 
 app.post('/api/deleteProfile', async (req, res) => {
-    try { await Profile.findOneAndDelete({ name: req.body.name, land: parseFloat(req.body.land) }); res.json({ success: true }); }
-    catch (e) { res.json({ success: false }); }
+    try { await Profile.findOneAndDelete({ name: req.body.name, land: parseFloat(req.body.land) }); res.json({ success: true }); } catch (e) { res.json({ success: false }); }
 });
 
 app.listen(PORT, () => console.log(`Server running on ${PORT}`));
