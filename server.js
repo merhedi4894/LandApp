@@ -25,8 +25,6 @@ mongoose.connect(MONGO_URI)
     .catch(err => console.error('MongoDB Error:', err));
 
 // --- Helper Functions ---
-
-// বাংলা সংখ্যাকে ইংরেজিতে রূপান্তরের ফাংশন
 function toEnglishDigits(str) {
     if (!str) return str;
     const map = {
@@ -59,25 +57,18 @@ app.post('/api/login', (req, res) => {
     }
 });
 
-// Save Entry (Updated with Normalizer)
+// Save Entry
 app.post('/api/saveFormData', async (req, res) => {
     try {
         const fd = req.body;
-        
-        // বাংলা টাকা বা বছর থাকলে ইংরেজিতে বদলে নেওয়া
         const cleanYear = toEnglishDigits(fd.hariYear);
         const cleanTkGiven = toEnglishDigits(fd.tkGiven);
-        
         const totalTk = (parseFloat(fd.rate) / 33) * parseFloat(fd.land);
         
         await new LandData({
-            name: fd.name, 
-            land: fd.land, 
-            rate: fd.rate,
-            totalTk: totalTk.toFixed(2), 
-            tkGiven: cleanTkGiven || 0,
-            hariYear: cleanYear || "", 
-            entryBy: fd.loggedInUser
+            name: fd.name, land: fd.land, rate: fd.rate,
+            totalTk: totalTk.toFixed(2), tkGiven: cleanTkGiven || 0,
+            hariYear: cleanYear || "", entryBy: fd.loggedInUser
         }).save();
         res.json({ success: true });
     } catch (e) { res.json({ success: false, message: e.toString() }); }
@@ -87,13 +78,8 @@ app.post('/api/saveFormData', async (req, res) => {
 app.post('/api/getInitData', async (req, res) => {
     try {
         const profiles = await Profile.find({}).sort({ name: 1 }).lean();
-
         const landStats = await LandData.aggregate([
-            { $group: { 
-                _id: "$name", 
-                lands: { $addToSet: "$land" }, 
-                years: { $addToSet: "$hariYear" } 
-            } }
+            { $group: { _id: "$name", lands: { $addToSet: "$land" }, years: { $addToSet: "$hariYear" } } }
         ]);
 
         const allYears = new Set(), namesFromData = new Set(), landMap = {}, yearMap = {};
@@ -105,17 +91,14 @@ app.post('/api/getInitData', async (req, res) => {
                 g.years.forEach(y => { if(y) allYears.add(y); });
             }
         });
-        
         res.json({ profiles, searchOptions: { names: Array.from(namesFromData).sort(), years: Array.from(allYears).sort((a,b)=>b-a), yearMap, landMap } });
     } catch (error) { res.json({ profiles: [], searchOptions: { names: [], years: [], yearMap: {}, landMap: {} } }); }
 });
 
-// Get Report Data (Updated with Normalizer)
+// Get Report Data
 app.post('/api/getReportData', async (req, res) => {
     const sd = req.body;
     let query = {};
-    
-    // সার্চের সময় বাংলা বছর থাকলে ইংরেজিতে বদলানো
     const cleanSearchYear = toEnglishDigits(sd.year);
 
     if (sd.name !== "ALL") query.name = sd.name;
@@ -135,12 +118,10 @@ app.post('/api/getReportData', async (req, res) => {
     } catch (e) { res.json({ success: false, records: [] }); }
 });
 
-// Delete Records (Updated with Normalizer)
+// Delete Records
 app.post('/api/deleteRecords', async (req, res) => {
     const { name, year } = req.body;
-    // ডিলিটের সময় বাংলা বছর থাকলে ইংরেজিতে বদলানো
     const cleanYear = toEnglishDigits(year);
-
     if (name === "ALL" || cleanYear === "ALL") return res.json({ success: false, message: "Select specific." });
     try {
         await LandData.deleteMany({ name, hariYear: cleanYear });
@@ -155,7 +136,6 @@ app.post('/api/saveProfile', async (req, res) => {
         const land = parseFloat(d.land);
         const rate = parseFloat(d.rate);
         if (!d.name || isNaN(land) || isNaN(rate)) return res.json({ success: false, message: "Invalid Data" });
-
         if (d.oldName) {
             await Profile.findOneAndUpdate(
                 { name: d.oldName, land: parseFloat(d.oldLand), rate: parseFloat(d.oldRate) },
