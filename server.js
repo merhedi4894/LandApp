@@ -24,7 +24,18 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log('MongoDB Connected!'))
     .catch(err => console.error('MongoDB Error:', err));
 
-// --- Helper ---
+// --- Helper Functions ---
+
+// বাংলা সংখ্যাকে ইংরেজিতে রূপান্তরের ফাংশন
+function toEnglishDigits(str) {
+    if (!str) return str;
+    const map = {
+        '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+        '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9'
+    };
+    return String(str).replace(/[০-৯]/g, d => map[d] || d);
+}
+
 function getYearSafe(dateVal) {
     if (!dateVal) return "";
     try {
@@ -48,31 +59,40 @@ app.post('/api/login', (req, res) => {
     }
 });
 
-// Save Entry
+// Save Entry (Updated with Normalizer)
 app.post('/api/saveFormData', async (req, res) => {
     try {
         const fd = req.body;
+        
+        // বাংলা টাকা বা বছর থাকলে ইংরেজিতে বদলে নেওয়া
+        const cleanYear = toEnglishDigits(fd.hariYear);
+        const cleanTkGiven = toEnglishDigits(fd.tkGiven);
+        
         const totalTk = (parseFloat(fd.rate) / 33) * parseFloat(fd.land);
+        
         await new LandData({
-            name: fd.name, land: fd.land, rate: fd.rate,
-            totalTk: totalTk.toFixed(2), tkGiven: fd.tkGiven || 0,
-            hariYear: fd.hariYear || "", entryBy: fd.loggedInUser
+            name: fd.name, 
+            land: fd.land, 
+            rate: fd.rate,
+            totalTk: totalTk.toFixed(2), 
+            tkGiven: cleanTkGiven || 0,
+            hariYear: cleanYear || "", 
+            entryBy: fd.loggedInUser
         }).save();
         res.json({ success: true });
     } catch (e) { res.json({ success: false, message: e.toString() }); }
 });
 
-// Get Initial Data (UPDATED: Year from hariYear field)
+// Get Initial Data
 app.post('/api/getInitData', async (req, res) => {
     try {
         const profiles = await Profile.find({}).sort({ name: 1 }).lean();
 
-        // Aggregation to get names, lands, and years from 'hariYear'
         const landStats = await LandData.aggregate([
             { $group: { 
                 _id: "$name", 
                 lands: { $addToSet: "$land" }, 
-                years: { $addToSet: "$hariYear" } // Changed from date formatting to hariYear
+                years: { $addToSet: "$hariYear" } 
             } }
         ]);
 
@@ -81,8 +101,7 @@ app.post('/api/getInitData', async (req, res) => {
             if (g._id) {
                 namesFromData.add(g._id);
                 landMap[g._id] = g.lands.sort((a,b)=>a-b);
-                // Filter null/empty years and sort
-                yearMap[g._id] = g.years.filter(y => y).sort((a, b) => b - a); 
+                yearMap[g._id] = g.years.filter(y => y).sort((a, b) => b - a);
                 g.years.forEach(y => { if(y) allYears.add(y); });
             }
         });
@@ -91,16 +110,18 @@ app.post('/api/getInitData', async (req, res) => {
     } catch (error) { res.json({ profiles: [], searchOptions: { names: [], years: [], yearMap: {}, landMap: {} } }); }
 });
 
-// Get Report Data (UPDATED: Search by hariYear)
+// Get Report Data (Updated with Normalizer)
 app.post('/api/getReportData', async (req, res) => {
     const sd = req.body;
     let query = {};
+    
+    // সার্চের সময় বাংলা বছর থাকলে ইংরেজিতে বদলানো
+    const cleanSearchYear = toEnglishDigits(sd.year);
+
     if (sd.name !== "ALL") query.name = sd.name;
     if (sd.land !== "ALL") query.land = parseFloat(sd.land);
-    
-    // Changed: Search by exact hariYear string instead of date range
-    if (sd.year !== "ALL") {
-        query.hariYear = sd.year;
+    if (cleanSearchYear !== "ALL") {
+        query.hariYear = cleanSearchYear;
     }
 
     try {
@@ -114,13 +135,15 @@ app.post('/api/getReportData', async (req, res) => {
     } catch (e) { res.json({ success: false, records: [] }); }
 });
 
-// Delete Records (UPDATED: Delete by hariYear)
+// Delete Records (Updated with Normalizer)
 app.post('/api/deleteRecords', async (req, res) => {
     const { name, year } = req.body;
-    if (name === "ALL" || year === "ALL") return res.json({ success: false, message: "Select specific." });
+    // ডিলিটের সময় বাংলা বছর থাকলে ইংরেজিতে বদলানো
+    const cleanYear = toEnglishDigits(year);
+
+    if (name === "ALL" || cleanYear === "ALL") return res.json({ success: false, message: "Select specific." });
     try {
-        // Changed: Delete by name and hariYear
-        await LandData.deleteMany({ name, hariYear: year });
+        await LandData.deleteMany({ name, hariYear: cleanYear });
         res.json({ success: true, message: "Deleted" });
     } catch(e) { res.json({ success: false, message: e.toString() }); }
 });
