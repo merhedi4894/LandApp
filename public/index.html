@@ -10,24 +10,16 @@
     <style>
         * { font-family: 'Inter', sans-serif; }
         body { background: linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 100%); min-height: 100vh; }
-        .input-field { transition: all 0.2s; border: 2px solid #e2e8f0; background-color: white; }
+        .input-field { transition: all 0.2s; border: 2px solid #e2e8f0; }
         .input-field:focus { border-color: #0ea5e9; outline: none; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15); }
         .btn { transition: all 0.2s; color: white; }
         .btn:hover { transform: translateY(-1px); }
-        .btn-primary { background: linear-gradient(135deg, #1e3a5f, #2d5a87); }
+        .btn-primary { background: linear-gradient(135deg, #1e3a5f, #2d5a87'); }
         .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
-        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        /* এখানে সিনট্যাক্স ঠিক করা হয়েছে (সিঙ্গেল কোট রিমুভ করা হয়েছে) */
-        .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
-        
-        /* Modal Overlay ঠিক করা হয়েছে */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); padding: 15px; }
-        
-        /* Dropdown List ঠিক করা হয়েছে */
-        .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #0ea5e9; max-height: 250px; overflow-y: auto; z-index: 9999; border-radius: 0 0 8px 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        
-        /* Table Scroll */
-        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626'); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669'); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 15px; }
+        .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #0ea5e9; max-height: 200px; overflow-y: auto; z-index: 50; border-radius: 0 0 8px 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
     </style>
 </head>
 <body class="p-2 sm:p-4 md:p-6">
@@ -121,8 +113,8 @@
                 </div>
                 <div id="resultArea" class="hidden mt-4">
                     <div id="statusCard" class="hidden p-4 bg-blue-50 border rounded-xl"></div>
-                    <div id="dataCard" class="hidden table-scroll border rounded-lg">
-                        <table class="w-full text-xs border-collapse min-w-[600px]">
+                    <div id="dataCard" class="hidden overflow-x-auto border rounded-lg">
+                        <table class="w-full text-xs border-collapse">
                             <thead class="bg-gray-100"><tr>
                                 <th class="p-2 border" data-lang="t_date">Date</th><th class="p-2 border" data-lang="t_name">Name</th><th class="p-2 border" data-lang="t_land">Land</th>
                                 <th class="p-2 border" data-lang="t_rate">Rate</th><th class="p-2 border" data-lang="t_total">Total</th><th class="p-2 border" data-lang="t_given">Given</th><th class="p-2 border" data-lang="t_year">Year</th>
@@ -135,7 +127,7 @@
         </div>
     </div>
 
-    <!-- Settings Modal (একই পেজে থাকবে) -->
+    <!-- Settings Modal -->
     <div id="settingsModal" class="hidden modal-overlay">
         <div class="bg-white rounded-2xl w-full max-w-3xl m-4 max-h-[90vh] flex flex-col">
             <div class="p-4 border-b bg-primary text-white rounded-t-2xl flex justify-between">
@@ -197,7 +189,7 @@
         
         const logout = () => { clearTimeout(idleTimer); localStorage.removeItem('s'); location.reload(); };
 
-        // Load Data (Updated with Auto Refresh Logic)
+        // Load Data
         async function init() {
             const d = await api('/api/getInitData');
             profiles = d.profiles || [];
@@ -206,49 +198,39 @@
             sMap = opt.landMap || {}; 
             yMap = opt.yearMap || {};
             
-            // 1. Refresh Entry Dropdown
+            // Entry Dropdown
             const ndd = document.getElementById('nameDD'); ndd.innerHTML = ''; [...new Set(profiles.map(p => p.name))].forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
             
-            // 2. Refresh Search Name List
+            // Search Dropdown List
             const sdd = document.getElementById('searchDD'); sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`; names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
 
-            // 3. Smart Refresh for Search Dropdowns (Check if current selection is still valid)
+            // *** UPDATE ACTIVE DROPDOWNS ***
             const currentName = document.getElementById('searchNameVal').value;
-            const currentLand = document.getElementById('searchLand').value;
-            const currentYear = document.getElementById('searchYear').value;
-
-            if (currentName !== 'ALL') {
-                // Check if name still exists
-                if (!names.includes(currentName)) {
-                    resetSearchDropdowns(); // Name was deleted
-                } else {
-                    // Name exists, update Land dropdown
-                    const lSel = document.getElementById('searchLand');
-                    lSel.innerHTML = '<option value="ALL">All Lands</option>';
-                    if (sMap[currentName]) sMap[currentName].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`);
-                    
-                    // Restore Land selection if valid
-                    if (currentLand !== 'ALL' && (!sMap[currentName] || !sMap[currentName].includes(parseFloat(currentLand)))) {
-                        lSel.value = "ALL"; // Land was deleted
-                    } else {
-                        lSel.value = currentLand;
-                    }
-
-                    // Update Year dropdown
-                    const ySel = document.getElementById('searchYear');
-                    ySel.innerHTML = '<option value="ALL">All Years</option>';
-                    if (yMap[currentName]) yMap[currentName].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`);
-                    
-                    // Restore Year selection if valid
-                    if (currentYear !== 'ALL' && (!yMap[currentName] || !yMap[currentName].includes(currentYear))) {
-                        ySel.value = "ALL"; // Year was deleted
-                    } else {
-                        ySel.value = currentYear;
-                    }
-                }
-            } else {
-                // It was ALL, just ensure clean state
+            
+            // Refresh Name Input if deleted
+            if (currentName !== 'ALL' && !names.includes(currentName)) {
                 resetSearchDropdowns();
+            } 
+            else if (currentName === 'ALL') {
+                // If All Names selected, reset Land/Year to default
+                const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>';
+                const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>';
+            } 
+            else {
+                // Specific Name Selected: Update Land & Year dropdowns based on new data
+                const lSel = document.getElementById('searchLand');
+                const currentLand = lSel.value;
+                lSel.innerHTML = '<option value="ALL">All Lands</option>';
+                if (sMap[currentName]) sMap[currentName].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`);
+                // Keep selection if exists, else reset
+                if (!sMap[currentName]?.includes(parseFloat(currentLand))) lSel.value = "ALL"; else lSel.value = currentLand;
+
+                const ySel = document.getElementById('searchYear');
+                const currentYear = ySel.value;
+                ySel.innerHTML = '<option value="ALL">All Years</option>';
+                if (yMap[currentName]) yMap[currentName].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`);
+                // Keep selection if exists, else reset
+                if (!yMap[currentName]?.includes(currentYear)) ySel.value = "ALL"; else ySel.value = currentYear;
             }
 
             if (!document.getElementById('settingsModal').classList.contains('hidden')) renderS_tbl(); setLang();
@@ -278,20 +260,40 @@
         // Search Logic
         const setSearchName = (v, t) => { document.getElementById('searchNameVal').value = v; document.getElementById('searchName').value = t; document.getElementById('searchDD').classList.add('hidden'); const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>'; if (v !== 'ALL' && sMap[v]) sMap[v].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`); const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>'; if (v !== 'ALL' && yMap[v]) yMap[v].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`); };
 
-        // Due Logic
+        // Due Logic (UPDATED: Hides Paid Years for Specific Name)
         const getDue = async () => {
             const nameVal = document.getElementById('searchNameVal').value; const landVal = document.getElementById('searchLand').value; const yearVal = document.getElementById('searchYear').value;
             const query = { name: nameVal, land: landVal, year: toEnglishDigits(yearVal) };
             const d = await api('/api/getReportData', query);
             document.getElementById('resultArea').classList.remove('hidden'); document.getElementById('statusCard').classList.remove('hidden'); document.getElementById('dataCard').classList.add('hidden');
+
             if (d.records.length > 0) {
                 const groups = {};
                 d.records.forEach(r => { const yr = r.hariYear || r.year; const key = `${r.name}_${r.land}_${yr}`; if(!groups[key]) groups[key] = { name: r.name, land: r.land, year: yr, total: 0, paid: 0 }; if(groups[key].total === 0) groups[key].total = parseFloat(r.total); groups[key].paid += parseFloat(r.given); });
                 let html = '<div class="space-y-2">';
+                
                 if (nameVal !== 'ALL') {
-                    Object.values(groups).forEach(g => { const due = g.total - g.paid; if (due > 30) { html += `<div class="p-3 bg-red-50 border-l-4 border-red-500 rounded shadow-sm"><p class="font-bold text-red-700">${g.name}</p><p class="text-sm">${g.year} সাল, ${g.land} শতাংশ জমির বকেয়া: <span class="font-bold">${due.toFixed(2)} টাকা</span></p></div>`; } else { html += `<div class="p-3 bg-green-50 border-l-4 border-green-500 rounded shadow-sm"><p class="text-green-700 font-semibold">${g.name} এর ${g.year} সালের হারি পরিশোধ হয়েছে।</p></div>`; } });
+                    // SPECIFIC NAME SELECTED
+                    let hasContent = false;
+                    Object.values(groups).forEach(g => { 
+                        const due = g.total - g.paid;
+                        // Only show if DUE > 30
+                        if (due > 30) { 
+                            hasContent = true;
+                            html += `<div class="p-3 bg-red-50 border-l-4 border-red-500 rounded shadow-sm"><p class="font-bold text-red-700">${g.name}</p><p class="text-sm">${g.year} সাল, ${g.land} শতাংশ জমির বকেয়া: <span class="font-bold">${due.toFixed(2)} টাকা</span></p></div>`; 
+                        }
+                    });
+                    if(!hasContent) html += '<p class="text-center text-green-600 font-bold py-4">কোনো বকেয়া নেই। সব পরিশোধ হয়েছে।</p>';
                 } else {
-                    let foundDue = false; Object.values(groups).forEach(g => { const due = g.total - g.paid; if (due > 30) { foundDue = true; html += `<div class="p-3 bg-red-50 border-l-4 border-red-500 rounded shadow-sm"><p class="font-bold text-red-700">${g.name}</p><p class="text-sm">${g.year} সাল, ${g.land} শতাংশ জমির বকেয়া: <span class="font-bold">${due.toFixed(2)} টাকা</span></p></div>`; } });
+                    // ALL NAMES SELECTED
+                    let foundDue = false; 
+                    Object.values(groups).forEach(g => { 
+                        const due = g.total - g.paid;
+                        if (due > 30) { 
+                            foundDue = true; 
+                            html += `<div class="p-3 bg-red-50 border-l-4 border-red-500 rounded shadow-sm"><p class="font-bold text-red-700">${g.name} (${g.year}) - ${g.land} শতাংশ</p><p class="text-sm">বকেয়া: <span class="font-bold">${due.toFixed(2)} টাকা</span></p></div>`; 
+                        } 
+                    });
                     if(!foundDue) html += '<p class="text-center text-green-600 font-bold py-4">কারো বকেয়া নেই!</p>';
                 }
                 html += '</div>'; document.getElementById('statusCard').innerHTML = html;
@@ -309,17 +311,13 @@
             else d.records.forEach(r => tb.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 border">${r.date}</td><td class="p-2 border">${r.name}</td><td class="p-2 border text-center">${r.land}</td><td class="p-2 border text-center">${r.rate}</td><td class="p-2 border text-right">${r.total}</td><td class="p-2 border text-right">${r.given}</td><td class="p-2 border text-center">${r.hariYear || r.year}</td></tr>`);
         };
 
-        // Delete Logic (Updated)
+        // Delete Logic
         const delData = async () => {
             const n = document.getElementById('searchNameVal').value; const y = document.getElementById('searchYear').value;
             if (n === 'ALL' || y === 'ALL') return alert('Select specific name/year');
             if(confirm('Delete?')) {
                 const res = await api('/api/deleteRecords', { name: n, year: toEnglishDigits(y) });
-                if(res.success) { 
-                    document.getElementById('resultArea').classList.add('hidden'); 
-                    await init(); // Re-fetch data and update dropdowns
-                    alert("Deleted successfully!"); 
-                }
+                if(res.success) { document.getElementById('resultArea').classList.add('hidden'); await init(); resetSearchDropdowns(); alert("Deleted successfully!"); }
                 else { alert("Error deleting data."); }
             }
         };
