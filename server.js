@@ -62,15 +62,13 @@ app.post('/api/saveFormData', async (req, res) => {
     } catch (e) { res.json({ success: false, message: e.toString() }); }
 });
 
-// Get Initial Data (Changed to POST to match frontend helper)
+// Get Initial Data
 app.post('/api/getInitData', async (req, res) => {
     try {
         const profiles = await Profile.find({}).sort({ name: 1 }).lean();
-
         const landStats = await LandData.aggregate([
             { $group: { _id: "$name", lands: { $addToSet: "$land" }, years: { $addToSet: { $dateToString: { format: "%Y", date: "$date" } } } } }
         ]);
-
         const allYears = new Set(), namesFromData = new Set(), landMap = {}, yearMap = {};
         landStats.forEach(g => {
             if (g._id) {
@@ -80,22 +78,11 @@ app.post('/api/getInitData', async (req, res) => {
                 g.years.forEach(y => { if(y) allYears.add(y); });
             }
         });
-
-        res.json({
-            profiles,
-            searchOptions: {
-                names: Array.from(namesFromData).sort(),
-                years: Array.from(allYears).sort((a,b)=>b-a),
-                yearMap, landMap
-            }
-        });
-    } catch (error) {
-        console.error("Init Error:", error);
-        res.json({ profiles: [], searchOptions: { names: [], years: [], yearMap: {}, landMap: {} } });
-    }
+        res.json({ profiles, searchOptions: { names: Array.from(namesFromData).sort(), years: Array.from(allYears).sort((a,b)=>b-a), yearMap, landMap } });
+    } catch (error) { res.json({ profiles: [], searchOptions: { names: [], years: [], yearMap: {}, landMap: {} } }); }
 });
 
-// Get Report
+// Get Report Data
 app.post('/api/getReportData', async (req, res) => {
     const sd = req.body;
     let query = {};
