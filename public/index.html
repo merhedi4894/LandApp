@@ -14,12 +14,14 @@
         .input-field:focus { border-color: #0ea5e9; outline: none; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15); }
         .btn { transition: all 0.2s; color: white; }
         .btn:hover { transform: translateY(-1px); }
-        .btn-primary { background: linear-gradient(135deg, #1e3a5f, #2d5a87'); }
+        /* CSS FIX: Removed invalid quotes */
+        .btn-primary { background: linear-gradient(135deg, #1e3a5f, #2d5a87); }
         .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
-        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626'); }
-        .btn-success { background: linear-gradient(135deg, #10b981, #059669'); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 15px; }
-        .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #0ea5e9; max-height: 200px; overflow-y: auto; z-index: 50; border-radius: 0 0 8px 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #0ea5e9; max-height: 200px; overflow-y: auto; z-index: 50; border-radius: 0 0 8px 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); display: none; }
+        .dropdown-list.show { display: block; }
     </style>
 </head>
 <body class="p-2 sm:p-4 md:p-6">
@@ -67,7 +69,7 @@
                     <div class="relative col-span-2">
                         <label class="text-xs font-semibold text-gray-600" data-lang="name">নাম</label>
                         <input type="text" id="entryName" class="input-field w-full px-3 py-2 rounded-lg bg-white" autocomplete="off" required>
-                        <div id="nameDD" class="hidden dropdown-list"></div>
+                        <div id="nameDD" class="dropdown-list"></div>
                     </div>
                     <div>
                         <label class="text-xs font-semibold text-gray-600" data-lang="land">জমি</label>
@@ -101,7 +103,7 @@
                     <div class="relative">
                         <input type="text" id="searchName" placeholder="Name" class="input-field w-full px-3 py-2 rounded-lg bg-white" autocomplete="off">
                         <input type="hidden" id="searchNameVal" value="ALL">
-                        <div id="searchDD" class="hidden dropdown-list"></div>
+                        <div id="searchDD" class="dropdown-list"></div>
                     </div>
                     <select id="searchLand" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL" data-lang="all_lands">All Lands</option></select>
                     <select id="searchYear" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL" data-lang="all_years">All Years</option></select>
@@ -189,7 +191,7 @@
         
         const logout = () => { clearTimeout(idleTimer); localStorage.removeItem('s'); location.reload(); };
 
-        // Load Data
+        // Load Data (ROBUST RESET LOGIC)
         async function init() {
             const d = await api('/api/getInitData');
             profiles = d.profiles || [];
@@ -198,54 +200,56 @@
             sMap = opt.landMap || {}; 
             yMap = opt.yearMap || {};
             
-            // Entry Dropdown
+            // 1. Rebuild Entry Dropdown
             const ndd = document.getElementById('nameDD'); ndd.innerHTML = ''; [...new Set(profiles.map(p => p.name))].forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
             
-            // Search Dropdown List
-            const sdd = document.getElementById('searchDD'); sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`; names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
+            // 2. Rebuild Search Dropdown List Content
+            const sdd = document.getElementById('searchDD'); sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`; 
+            names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
 
-            // *** UPDATE ACTIVE DROPDOWNS ***
+            // 3. RESET STATE LOGIC
             const currentName = document.getElementById('searchNameVal').value;
             
-            // Refresh Name Input if deleted
-            if (currentName !== 'ALL' && !names.includes(currentName)) {
+            // CASE A: Database Empty or Name Deleted -> FULL RESET
+            if (names.length === 0 || (currentName !== 'ALL' && !names.includes(currentName))) {
                 resetSearchDropdowns();
             } 
+            // CASE B: User has "All Names" selected -> Just ensure Land/Year are generic
             else if (currentName === 'ALL') {
-                // If All Names selected, reset Land/Year to default
                 const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>';
                 const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>';
             } 
+            // CASE C: Valid Name Selected -> Update dependent dropdowns
             else {
-                // Specific Name Selected: Update Land & Year dropdowns based on new data
                 const lSel = document.getElementById('searchLand');
                 const currentLand = lSel.value;
                 lSel.innerHTML = '<option value="ALL">All Lands</option>';
                 if (sMap[currentName]) sMap[currentName].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`);
-                // Keep selection if exists, else reset
+                // If previously selected land is gone, reset to ALL
                 if (!sMap[currentName]?.includes(parseFloat(currentLand))) lSel.value = "ALL"; else lSel.value = currentLand;
 
                 const ySel = document.getElementById('searchYear');
                 const currentYear = ySel.value;
                 ySel.innerHTML = '<option value="ALL">All Years</option>';
                 if (yMap[currentName]) yMap[currentName].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`);
-                // Keep selection if exists, else reset
+                // If previously selected year is gone, reset to ALL
                 if (!yMap[currentName]?.includes(currentYear)) ySel.value = "ALL"; else ySel.value = currentYear;
             }
 
-            if (!document.getElementById('settingsModal').classList.contains('hidden')) renderS_tbl(); setLang();
+            if (!document.getElementById('settingsModal').classList.contains('hidden')) renderS_tbl(); 
+            setLang();
         }
 
         // --- Reset Search Dropdowns Function ---
         function resetSearchDropdowns() {
             document.getElementById('searchNameVal').value = 'ALL';
             document.getElementById('searchName').value = 'All Names';
-            const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>';
-            const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>';
+            document.getElementById('searchLand').innerHTML = '<option value="ALL">All Lands</option>';
+            document.getElementById('searchYear').innerHTML = '<option value="ALL">All Years</option>';
         }
 
         // Entry Logic
-        const setEntryName = n => { document.getElementById('entryName').value = n; document.getElementById('nameDD').classList.add('hidden'); const m = profiles.filter(p => p.name === n); const lSel = document.getElementById('entryLand'); lSel.innerHTML = '<option value="">Select</option>'; m.forEach(p => lSel.innerHTML += `<option value="${p.land}">${p.land}</option>`); if (m.length === 1) { lSel.value = m[0].land; updateRate(); } };
+        const setEntryName = n => { document.getElementById('entryName').value = n; document.getElementById('nameDD').classList.remove('show'); const m = profiles.filter(p => p.name === n); const lSel = document.getElementById('entryLand'); lSel.innerHTML = '<option value="">Select</option>'; m.forEach(p => lSel.innerHTML += `<option value="${p.land}">${p.land}</option>`); if (m.length === 1) { lSel.value = m[0].land; updateRate(); } };
         const updateRate = () => { const n = document.getElementById('entryName').value, l = document.getElementById('entryLand').value; const p = profiles.find(x => x.name === n && x.land == l); if (p) { document.getElementById('entryRate').innerHTML = `<option value="${p.rate}">${p.rate}</option>`; document.getElementById('entryRate').value = p.rate; document.getElementById('entryHari').value = p.hariBorsho || "-"; } };
 
         document.getElementById('landForm').addEventListener('submit', async e => {
@@ -258,9 +262,9 @@
         });
 
         // Search Logic
-        const setSearchName = (v, t) => { document.getElementById('searchNameVal').value = v; document.getElementById('searchName').value = t; document.getElementById('searchDD').classList.add('hidden'); const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>'; if (v !== 'ALL' && sMap[v]) sMap[v].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`); const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>'; if (v !== 'ALL' && yMap[v]) yMap[v].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`); };
+        const setSearchName = (v, t) => { document.getElementById('searchNameVal').value = v; document.getElementById('searchName').value = t; document.getElementById('searchDD').classList.remove('show'); const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>'; if (v !== 'ALL' && sMap[v]) sMap[v].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`); const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>'; if (v !== 'ALL' && yMap[v]) yMap[v].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`); };
 
-        // Due Logic (UPDATED: Hides Paid Years for Specific Name)
+        // Due Logic (Only Shows Dues for Specific Name)
         const getDue = async () => {
             const nameVal = document.getElementById('searchNameVal').value; const landVal = document.getElementById('searchLand').value; const yearVal = document.getElementById('searchYear').value;
             const query = { name: nameVal, land: landVal, year: toEnglishDigits(yearVal) };
@@ -273,19 +277,18 @@
                 let html = '<div class="space-y-2">';
                 
                 if (nameVal !== 'ALL') {
-                    // SPECIFIC NAME SELECTED
+                    // SPECIFIC NAME: Show Only Dues
                     let hasContent = false;
                     Object.values(groups).forEach(g => { 
                         const due = g.total - g.paid;
-                        // Only show if DUE > 30
                         if (due > 30) { 
                             hasContent = true;
                             html += `<div class="p-3 bg-red-50 border-l-4 border-red-500 rounded shadow-sm"><p class="font-bold text-red-700">${g.name}</p><p class="text-sm">${g.year} সাল, ${g.land} শতাংশ জমির বকেয়া: <span class="font-bold">${due.toFixed(2)} টাকা</span></p></div>`; 
                         }
                     });
-                    if(!hasContent) html += '<p class="text-center text-green-600 font-bold py-4">কোনো বকেয়া নেই। সব পরিশোধ হয়েছে।</p>';
+                    if(!hasContent) html += '<p class="text-center text-green-600 font-bold py-4">কোনো বকেয়া নেই।</p>';
                 } else {
-                    // ALL NAMES SELECTED
+                    // ALL NAMES
                     let foundDue = false; 
                     Object.values(groups).forEach(g => { 
                         const due = g.total - g.paid;
@@ -317,7 +320,12 @@
             if (n === 'ALL' || y === 'ALL') return alert('Select specific name/year');
             if(confirm('Delete?')) {
                 const res = await api('/api/deleteRecords', { name: n, year: toEnglishDigits(y) });
-                if(res.success) { document.getElementById('resultArea').classList.add('hidden'); await init(); resetSearchDropdowns(); alert("Deleted successfully!"); }
+                if(res.success) { 
+                    document.getElementById('resultArea').classList.add('hidden'); 
+                    await init(); 
+                    resetSearchDropdowns(); // Force Reset
+                    alert("Deleted successfully!"); 
+                }
                 else { alert("Error deleting data."); }
             }
         };
@@ -331,9 +339,12 @@
         const delP = async (n, l, r) => { if(confirm('Delete Profile?')) { const res = await api('/api/deleteProfile', { name: n, land: l, rate: r }); if(res.success) { await init(); renderS_tbl(); resetSearchDropdowns(); alert("Profile Deleted"); } } };
 
         // Listeners
-        document.getElementById('entryName').addEventListener('focus', function() { document.getElementById('nameDD').classList.remove('hidden'); this.select(); });
-        document.getElementById('searchName').addEventListener('focus', function() { document.getElementById('searchDD').classList.remove('hidden'); this.select(); });
-        document.addEventListener('click', e => { if (!e.target.closest('#entryName') && !e.target.closest('#nameDD')) document.getElementById('nameDD').classList.add('hidden'); if (!e.target.closest('#searchName') && !e.target.closest('#searchDD')) document.getElementById('searchDD').classList.add('hidden'); });
+        document.getElementById('entryName').addEventListener('focus', function() { document.getElementById('nameDD').classList.add('show'); this.select(); });
+        document.getElementById('searchName').addEventListener('focus', function() { document.getElementById('searchDD').classList.add('show'); this.select(); });
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#entryName') && !e.target.closest('#nameDD')) document.getElementById('nameDD').classList.remove('show');
+            if (!e.target.closest('#searchName') && !e.target.closest('#searchDD')) document.getElementById('searchDD').classList.remove('show');
+        });
 
         // Session Check
         if (localStorage.getItem('s')) { const s = JSON.parse(localStorage.getItem('s')); user = { name: s.u }; document.getElementById('loginSection').classList.add('hidden'); document.getElementById('appSection').classList.remove('hidden'); init(); startIdleMonitor(); }
