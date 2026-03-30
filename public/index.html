@@ -182,7 +182,7 @@
         let user = null, profiles = [], sMap = {}, yMap = {}, names = [];
         
         // --- AUTO LOGOUT SETUP (10 Minutes) ---
-        const IDLE_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+        const IDLE_TIMEOUT = 10 * 60 * 1000;
         let idleTimer;
 
         function startIdleMonitor() {
@@ -244,7 +244,6 @@
             sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`;
             names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
 
-            // Settings Table Update (Conditional)
             if (!document.getElementById('settingsModal').classList.contains('hidden')) renderS_tbl();
             
             setLang();
@@ -303,7 +302,7 @@
             if (v !== 'ALL' && yMap[v]) yMap[v].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`);
         };
 
-        // --- DUE LOGIC ---
+        // --- DUE LOGIC (Updated: Due <= 30 is Paid) ---
         const getDue = async () => {
             const nameVal = document.getElementById('searchNameVal').value;
             const query = { name: nameVal, land: 'ALL', year: 'ALL' };
@@ -330,7 +329,8 @@
                 if (nameVal !== 'ALL') {
                     Object.values(groups).forEach(g => {
                         const due = g.total - g.paid;
-                        if (due > 1) {
+                        // Logic: Due > 30 means Red, otherwise Paid
+                        if (due > 30) {
                             html += `<div class="p-3 bg-red-50 border-l-4 border-red-500 rounded shadow-sm">
                                 <p class="font-bold text-red-700">${g.name}</p>
                                 <p class="text-sm">${g.year} সাল, ${g.land} শতাংশ জমির বকেয়া: <span class="font-bold">${due.toFixed(2)} টাকা</span></p>
@@ -345,7 +345,8 @@
                     let foundDue = false;
                     Object.values(groups).forEach(g => {
                         const due = g.total - g.paid;
-                        if (due > 1) {
+                        // Logic: Due > 30 means Red
+                        if (due > 30) {
                             foundDue = true;
                             html += `<div class="p-3 bg-red-50 border-l-4 border-red-500 rounded shadow-sm">
                                 <p class="font-bold text-red-700">${g.name} (${g.year}) - ${g.land} শতাংশ</p>
@@ -363,15 +364,27 @@
             }
         };
 
+        // --- DATA BUTTON LOGIC (Updated: Needs Name & Year) ---
         const getData = async () => {
-             const d = await api('/api/getReportData', {
-                name: document.getElementById('searchNameVal').value,
+            const name = document.getElementById('searchNameVal').value;
+            const year = document.getElementById('searchYear').value;
+
+            // Validation Check
+            if (name === 'ALL' || year === 'ALL') {
+                alert('ডাটা দেখতে অবশ্যই নির্দিষ্ট নাম এবং বছর সিলেক্ট করতে হবে।');
+                return;
+            }
+
+            const d = await api('/api/getReportData', {
+                name: name,
                 land: document.getElementById('searchLand').value,
-                year: document.getElementById('searchYear').value
+                year: year
             });
+            
             document.getElementById('resultArea').classList.remove('hidden');
             document.getElementById('statusCard').classList.add('hidden');
             document.getElementById('dataCard').classList.remove('hidden');
+            
             const tb = document.getElementById('tBody'); tb.innerHTML = '';
             if(d.records.length === 0) tb.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-400">No Data</td></tr>';
             else d.records.forEach(r => tb.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 border">${r.date}</td><td class="p-2 border">${r.name}</td><td class="p-2 border text-center">${r.land}</td><td class="p-2 border text-center">${r.rate}</td><td class="p-2 border text-right">${r.total}</td><td class="p-2 border text-right">${r.given}</td><td class="p-2 border text-center">${r.hariYear || r.year}</td></tr>`);
@@ -386,7 +399,7 @@
             }
         };
 
-        // --- Settings Logic (Fixed) ---
+        // --- Settings Logic ---
         const openSettings = () => { document.getElementById('settingsModal').classList.remove('hidden'); renderS_tbl(); };
         const closeSettings = () => document.getElementById('settingsModal').classList.add('hidden');
         
@@ -417,8 +430,8 @@
             if (!d.name || !d.land || !d.rate) return alert("Fill Name, Land, Rate");
             const res = await api('/api/saveProfile', d);
             if (res.success) {
-                await init(); // Data Load holo
-                renderS_tbl(); // Table explicitly update holo
+                await init();
+                renderS_tbl();
                 document.getElementById('sName').value = ''; document.getElementById('sLand').value = ''; document.getElementById('sRate').value = ''; document.getElementById('sHari').value = '';
                 document.getElementById('sOldName').value = ''; document.getElementById('sOldLand').value = ''; document.getElementById('sOldRate').value = '';
                 alert("Saved!");
@@ -429,7 +442,7 @@
             if(confirm('Delete Profile?')) {
                 await api('/api/deleteProfile', { name: n, land: l, rate: r });
                 await init();
-                renderS_tbl(); // Table explicitly update holo
+                renderS_tbl();
             }
         };
 
