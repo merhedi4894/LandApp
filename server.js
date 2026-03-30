@@ -62,36 +62,47 @@ app.post('/api/saveFormData', async (req, res) => {
     } catch (e) { res.json({ success: false, message: e.toString() }); }
 });
 
-// Get Initial Data
+// Get Initial Data (UPDATED: Year from hariYear field)
 app.post('/api/getInitData', async (req, res) => {
     try {
         const profiles = await Profile.find({}).sort({ name: 1 }).lean();
+
+        // Aggregation to get names, lands, and years from 'hariYear'
         const landStats = await LandData.aggregate([
-            { $group: { _id: "$name", lands: { $addToSet: "$land" }, years: { $addToSet: { $dateToString: { format: "%Y", date: "$date" } } } } }
+            { $group: { 
+                _id: "$name", 
+                lands: { $addToSet: "$land" }, 
+                years: { $addToSet: "$hariYear" } // Changed from date formatting to hariYear
+            } }
         ]);
+
         const allYears = new Set(), namesFromData = new Set(), landMap = {}, yearMap = {};
         landStats.forEach(g => {
             if (g._id) {
                 namesFromData.add(g._id);
                 landMap[g._id] = g.lands.sort((a,b)=>a-b);
-                yearMap[g._id] = g.years.filter(y=>y).sort((a,b)=>b-a);
+                // Filter null/empty years and sort
+                yearMap[g._id] = g.years.filter(y => y).sort((a, b) => b - a); 
                 g.years.forEach(y => { if(y) allYears.add(y); });
             }
         });
+        
         res.json({ profiles, searchOptions: { names: Array.from(namesFromData).sort(), years: Array.from(allYears).sort((a,b)=>b-a), yearMap, landMap } });
     } catch (error) { res.json({ profiles: [], searchOptions: { names: [], years: [], yearMap: {}, landMap: {} } }); }
 });
 
-// Get Report Data
+// Get Report Data (UPDATED: Search by hariYear)
 app.post('/api/getReportData', async (req, res) => {
     const sd = req.body;
     let query = {};
     if (sd.name !== "ALL") query.name = sd.name;
     if (sd.land !== "ALL") query.land = parseFloat(sd.land);
+    
+    // Changed: Search by exact hariYear string instead of date range
     if (sd.year !== "ALL") {
-        const y = parseInt(sd.year);
-        query.date = { $gte: new Date(`${y}-01-01`), $lt: new Date(`${y+1}-01-01`) };
+        query.hariYear = sd.year;
     }
+
     try {
         const records = await LandData.find(query).sort({ date: -1 }).lean();
         res.json({ success: true, records: records.map(r => ({
@@ -103,13 +114,13 @@ app.post('/api/getReportData', async (req, res) => {
     } catch (e) { res.json({ success: false, records: [] }); }
 });
 
-// Delete Records
+// Delete Records (UPDATED: Delete by hariYear)
 app.post('/api/deleteRecords', async (req, res) => {
     const { name, year } = req.body;
     if (name === "ALL" || year === "ALL") return res.json({ success: false, message: "Select specific." });
     try {
-        const y = parseInt(year);
-        await LandData.deleteMany({ name, date: { $gte: new Date(`${y}-01-01`), $lt: new Date(`${y+1}-01-01`) } });
+        // Changed: Delete by name and hariYear
+        await LandData.deleteMany({ name, hariYear: year });
         res.json({ success: true, message: "Deleted" });
     } catch(e) { res.json({ success: false, message: e.toString() }); }
 });
