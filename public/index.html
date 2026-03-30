@@ -244,7 +244,6 @@
             sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`;
             names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
 
-            // Settings Table Update
             if (!document.getElementById('settingsModal').classList.contains('hidden')) renderS_tbl();
             
             setLang();
@@ -294,12 +293,10 @@
             document.getElementById('searchName').value = t;
             document.getElementById('searchDD').classList.add('hidden');
             
-            // Update Land Dropdown
             const lSel = document.getElementById('searchLand');
             lSel.innerHTML = '<option value="ALL">All Lands</option>';
             if (v !== 'ALL' && sMap[v]) sMap[v].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`);
 
-            // Update Year Dropdown (Auto load years for selected name)
             const ySel = document.getElementById('searchYear');
             ySel.innerHTML = '<option value="ALL">All Years</option>';
             if (v !== 'ALL' && yMap[v]) yMap[v].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`);
@@ -370,7 +367,6 @@
             const name = document.getElementById('searchNameVal').value;
             const year = document.getElementById('searchYear').value;
 
-            // Validation Check
             if (name === 'ALL' || year === 'ALL') {
                 alert('ডাটা দেখতে অবশ্যই নির্দিষ্ট নাম এবং বছর সিলেক্ট করতে হবে।');
                 return;
@@ -391,12 +387,20 @@
             else d.records.forEach(r => tb.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 border">${r.date}</td><td class="p-2 border">${r.name}</td><td class="p-2 border text-center">${r.land}</td><td class="p-2 border text-center">${r.rate}</td><td class="p-2 border text-right">${r.total}</td><td class="p-2 border text-right">${r.given}</td><td class="p-2 border text-center">${r.hariYear || r.year}</td></tr>`);
         };
 
+        // --- DELETE LOGIC (UPDATED) ---
         const delData = async () => {
             const n = document.getElementById('searchNameVal').value, y = document.getElementById('searchYear').value;
             if (n === 'ALL' || y === 'ALL') return alert('Select specific name/year');
             if(confirm('Delete?')) {
-                await api('/api/deleteRecords', { name: n, year: y });
-                document.getElementById('resultArea').classList.add('hidden');
+                const res = await api('/api/deleteRecords', { name: n, year: y });
+                if(res.success) {
+                    document.getElementById('resultArea').classList.add('hidden');
+                    await init(); // Refresh data from server
+                    setSearchName('ALL', 'All Names'); // Reset dropdowns
+                    alert("Deleted successfully!");
+                } else {
+                    alert("Error deleting data.");
+                }
             }
         };
 
@@ -441,9 +445,13 @@
 
         const delP = async (n, l, r) => {
             if(confirm('Delete Profile?')) {
-                await api('/api/deleteProfile', { name: n, land: l, rate: r });
-                await init();
-                renderS_tbl();
+                const res = await api('/api/deleteProfile', { name: n, land: l, rate: r });
+                if(res.success) {
+                    await init();
+                    renderS_tbl();
+                    setSearchName('ALL', 'All Names'); // Reset search dropdowns
+                    alert("Profile Deleted");
+                }
             }
         };
 
