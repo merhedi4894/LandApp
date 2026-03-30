@@ -37,7 +37,7 @@
                 <input type="text" id="username" value="mehedi4894" class="input-field w-full px-4 py-3 rounded-lg mb-4 bg-gray-100 font-semibold" required>
                 <input type="password" id="password" placeholder="Password" class="input-field w-full px-4 py-3 rounded-lg mb-4" required>
                 <div id="loginError" class="hidden text-red-500 text-sm mb-3"></div>
-                <button class="btn btn-primary w-full py-3 rounded-lg font-semibold" data-lang="login_btn">Login</button>
+                <button type="submit" class="btn btn-primary w-full py-3 rounded-lg font-semibold" data-lang="login_btn">Login</button>
             </form>
         </div>
     </div>
@@ -91,7 +91,7 @@
                         <label class="text-xs font-semibold text-gray-600" data-lang="lease_year">বছর</label>
                         <input type="text" id="entryYear" class="input-field w-full px-3 py-2 rounded-lg bg-white">
                     </div>
-                    <div><button class="btn btn-primary w-full py-2 rounded-lg font-semibold" data-lang="save_btn">Save</button></div>
+                    <div><button type="submit" class="btn btn-primary w-full py-2 rounded-lg font-semibold" data-lang="save_btn">Save</button></div>
                 </form>
                 <div id="msg" class="hidden text-green-600 text-center text-sm mt-2 font-semibold" data-lang="save_success">Saved!</div>
             </div>
@@ -118,13 +118,8 @@
                     <div id="dataCard" class="hidden overflow-x-auto border rounded-lg">
                         <table class="w-full text-xs border-collapse">
                             <thead class="bg-gray-100"><tr>
-                                <th class="p-2 border" data-lang="t_date">Date</th>
-                                <th class="p-2 border" data-lang="t_name">Name</th>
-                                <th class="p-2 border" data-lang="t_land">Land</th>
-                                <th class="p-2 border" data-lang="t_rate">Rate</th>
-                                <th class="p-2 border" data-lang="t_total">Total</th>
-                                <th class="p-2 border" data-lang="t_given">Given</th>
-                                <th class="p-2 border" data-lang="t_year">Year</th>
+                                <th class="p-2 border" data-lang="t_date">Date</th><th class="p-2 border" data-lang="t_name">Name</th><th class="p-2 border" data-lang="t_land">Land</th>
+                                <th class="p-2 border" data-lang="t_rate">Rate</th><th class="p-2 border" data-lang="t_total">Total</th><th class="p-2 border" data-lang="t_given">Given</th><th class="p-2 border" data-lang="t_year">Year</th>
                             </tr></thead>
                             <tbody id="tBody"></tbody>
                         </table>
@@ -157,11 +152,8 @@
                 <div class="overflow-x-auto border rounded-lg">
                     <table class="w-full text-sm border-collapse">
                         <thead class="bg-gray-100"><tr>
-                            <th class="p-2 border text-left" data-lang="name">Name</th>
-                            <th class="p-2 border" data-lang="land">Land</th>
-                            <th class="p-2 border" data-lang="hari_start">Start</th>
-                            <th class="p-2 border" data-lang="rate">Rate</th>
-                            <th class="p-2 border" data-lang="action">Action</th>
+                            <th class="p-2 border text-left" data-lang="name">Name</th><th class="p-2 border" data-lang="land">Land</th>
+                            <th class="p-2 border" data-lang="hari_start">Start</th><th class="p-2 border" data-lang="rate">Rate</th><th class="p-2 border" data-lang="action">Action</th>
                         </tr></thead>
                         <tbody id="sTable"></tbody>
                     </table>
@@ -208,141 +200,270 @@
         }
         // --------------------------------------
 
-        const api = (url, data = {}) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(r => r.json())
+        const api = (url, data = {}) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(r => r.json());
 
         // Login
         document.getElementById('loginForm').addEventListener('submit', async e => {
-            e.preventDefault()
-            const res = await api('/api/login', { username: document.getElementById('username').value, password: document.getElementById('password').value })
+            e.preventDefault();
+            const res = await api('/api/login', { username: document.getElementById('username').value, password: document.getElementById('password').value });
             if (res.success) {
-                user = res.user
-                localStorage.setItem('s', JSON.stringify({ u: user.name }))
-                document.getElementById('loginSection').classList.add('hidden')
-                document.getElementById('appSection').classList.remove('hidden')
-                init()
-                startIdleMonitor()
+                user = res.user;
+                localStorage.setItem('s', JSON.stringify({ u: user.name }));
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('appSection').classList.remove('hidden');
+                init();
+                startIdleMonitor();
             } else {
-                document.getElementById('loginError').classList.remove('hidden')
-                document.getElementById('loginError').innerText = res.message
+                document.getElementById('loginError').classList.remove('hidden');
+                document.getElementById('loginError').innerText = res.message;
             }
-        })
+        });
         
         const logout = () => { 
-            clearTimeout(idleTimer)
-            localStorage.removeItem('s')
-            location.reload()
-        }
+            clearTimeout(idleTimer);
+            localStorage.removeItem('s'); 
+            location.reload(); 
+        };
 
         // Load Data
         async function init() {
-            const d = await api('/api/getInitData')
-            profiles = d.profiles || []
-            const opt = d.searchOptions || {}
-            names = opt.names || []
-            sMap = opt.landMap || {}
-            yMap = opt.yearMap || {}
+            const d = await api('/api/getInitData');
+            profiles = d.profiles || [];
+            const opt = d.searchOptions || {};
+            names = opt.names || [];
+            sMap = opt.landMap || {};
+            yMap = opt.yearMap || {};
             
             // Entry Dropdown
-            const ndd = document.getElementById('nameDD')
-            ndd.innerHTML = ''
-            ;[...new Set(profiles.map(p => p.name))].forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`)
+            const ndd = document.getElementById('nameDD');
+            ndd.innerHTML = '';
+            [...new Set(profiles.map(p => p.name))].forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
             
             // Search Dropdown
-            const sdd = document.getElementById('searchDD')
-            sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`
-            names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`)
+            const sdd = document.getElementById('searchDD');
+            sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`;
+            names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
 
-            // Settings Table Update (Conditional) - Fixed Here
-            if (!document.getElementById('settingsModal').classList.contains('hidden')) renderS_tbl()
+            // Settings Table Update
+            if (!document.getElementById('settingsModal').classList.contains('hidden')) renderS_tbl();
             
-            setLang()
+            setLang();
         }
 
         // --- Entry Logic ---
         const setEntryName = n => {
-            document.getElementById('entryName').value = n
-            document.getElementById('nameDD').classList.add('hidden')
-            const m = profiles.filter(p => p.name === n)
-            const lSel = document.getElementById('entryLand')
-            lSel.innerHTML = '<option value="">Select</option>'
-            m.forEach(p => lSel.innerHTML += `<option value="${p.land}">${p.land}</option>`)
-            if (m.length === 1) { lSel.value = m[0].land; updateRate() }
-        }
+            document.getElementById('entryName').value = n;
+            document.getElementById('nameDD').classList.add('hidden');
+            const m = profiles.filter(p => p.name === n);
+            const lSel = document.getElementById('entryLand');
+            lSel.innerHTML = '<option value="">Select</option>';
+            m.forEach(p => lSel.innerHTML += `<option value="${p.land}">${p.land}</option>`);
+            if (m.length === 1) { lSel.value = m[0].land; updateRate(); }
+        };
         
         const updateRate = () => {
-            const n = document.getElementById('entryName').value, l = document.getElementById('entryLand').value
-            const p = profiles.find(x => x.name === n && x.land == l)
+            const n = document.getElementById('entryName').value, l = document.getElementById('entryLand').value;
+            const p = profiles.find(x => x.name === n && x.land == l);
             if (p) {
-                document.getElementById('entryRate').innerHTML = `<option value="${p.rate}">${p.rate}</option>`
-                document.getElementById('entryRate').value = p.rate
-                document.getElementById('entryHari').value = p.hariBorsho || "-"
+                document.getElementById('entryRate').innerHTML = `<option value="${p.rate}">${p.rate}</option>`;
+                document.getElementById('entryRate').value = p.rate;
+                document.getElementById('entryHari').value = p.hariBorsho || "-";
             }
-        }
+        };
 
         document.getElementById('landForm').addEventListener('submit', async e => {
-            e.preventDefault()
+            e.preventDefault();
             const d = {
                 name: document.getElementById('entryName').value, land: document.getElementById('entryLand').value,
                 rate: document.getElementById('entryRate').value, tkGiven: document.getElementById('entryTk').value,
                 hariYear: document.getElementById('entryYear').value, loggedInUser: user.name
-            }
-            if (!d.name || !d.land || !d.rate) return alert("Fill fields")
-            const res = await api('/api/saveFormData', d)
+            };
+            if (!d.name || !d.land || !d.rate) return alert("Fill fields");
+            const res = await api('/api/saveFormData', d);
             if (res.success) {
-                document.getElementById('msg').classList.remove('hidden')
-                e.target.reset()
-                setTimeout(() => document.getElementById('msg').classList.add('hidden'), 1500)
-                init()
-            } else alert("Error")
-        })
+                document.getElementById('msg').classList.remove('hidden');
+                e.target.reset();
+                setTimeout(() => document.getElementById('msg').classList.add('hidden'), 1500);
+                init();
+            } else alert("Error");
+        });
 
         // --- Search Logic ---
         const setSearchName = (v, t) => {
-            document.getElementById('searchNameVal').value = v
-            document.getElementById('searchName').value = t
-            document.getElementById('searchDD').classList.add('hidden')
+            document.getElementById('searchNameVal').value = v;
+            document.getElementById('searchName').value = t;
+            document.getElementById('searchDD').classList.add('hidden');
             
-            const lSel = document.getElementById('searchLand')
-            lSel.innerHTML = '<option value="ALL">All Lands</option>'
-            if (v !== 'ALL' && sMap[v]) sMap[v].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`)
+            // Update Land Dropdown
+            const lSel = document.getElementById('searchLand');
+            lSel.innerHTML = '<option value="ALL">All Lands</option>';
+            if (v !== 'ALL' && sMap[v]) sMap[v].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`);
 
-            const ySel = document.getElementById('searchYear')
-            ySel.innerHTML = '<option value="ALL">All Years</option>'
-            if (v !== 'ALL' && yMap[v]) yMap[v].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`)
-        }
+            // Update Year Dropdown (Auto load years for selected name)
+            const ySel = document.getElementById('searchYear');
+            ySel.innerHTML = '<option value="ALL">All Years</option>';
+            if (v !== 'ALL' && yMap[v]) yMap[v].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`);
+        };
 
-        // --- DUE LOGIC ---
+        // --- DUE LOGIC (Due > 30 is Unpaid) ---
         const getDue = async () => {
-            const nameVal = document.getElementById('searchNameVal').value
-            const query = { name: nameVal, land: 'ALL', year: 'ALL' }
+            const nameVal = document.getElementById('searchNameVal').value;
+            const query = { name: nameVal, land: 'ALL', year: 'ALL' };
 
-            const d = await api('/api/getReportData', query)
-            document.getElementById('resultArea').classList.remove('hidden')
-            document.getElementById('statusCard').classList.remove('hidden')
-            document.getElementById('dataCard').classList.add('hidden')
+            const d = await api('/api/getReportData', query);
+            document.getElementById('resultArea').classList.remove('hidden');
+            document.getElementById('statusCard').classList.remove('hidden');
+            document.getElementById('dataCard').classList.add('hidden');
 
             if (d.records.length > 0) {
-                const groups = {}
+                const groups = {};
                 d.records.forEach(r => {
-                    const yr = r.hariYear || r.year
-                    const key = `${r.name}_${r.land}_${yr}`
-                
-                    if(!groups[key]) groups[key] = { name: r.name, land: r.land, year: yr, total: 0, paid: 0 }
-                
-                    if(groups[key].total === 0) groups[key].total = parseFloat(r.total)
-                    groups[key].paid += parseFloat(r.given)
-                })
+                    const yr = r.hariYear || r.year;
+                    const key = `${r.name}_${r.land}_${yr}`;
+                    
+                    if(!groups[key]) groups[key] = { name: r.name, land: r.land, year: yr, total: 0, paid: 0 };
+                    
+                    if(groups[key].total === 0) groups[key].total = parseFloat(r.total);
+                    groups[key].paid += parseFloat(r.given);
+                });
 
-                let html = '<div class="space-y-2">'
+                let html = '<div class="space-y-2">';
                 
                 if (nameVal !== 'ALL') {
                     Object.values(groups).forEach(g => {
-                        const due = g.total - g.paid
+                        const due = g.total - g.paid;
                         if (due > 30) {
                             html += `<div class="p-3 bg-red-50 border-l-4 border-red-500 rounded shadow-sm">
                                 <p class="font-bold text-red-700">${g.name}</p>
                                 <p class="text-sm">${g.year} সাল, ${g.land} শতাংশ জমির বকেয়া: <span class="font-bold">${due.toFixed(2)} টাকা</span></p>
-                            </div>`
+                            </div>`;
                         } else {
                             html += `<div class="p-3 bg-green-50 border-l-4 border-green-500 rounded shadow-sm">
-                                <p class="text-green-700 font-semibold">${
+                                <p class="text-green-700 font-semibold">${g.name} এর ${g.year} সালের হারি পরিশোধ হয়েছে।</p>
+                            </div>`;
+                        }
+                    });
+                } else {
+                    let foundDue = false;
+                    Object.values(groups).forEach(g => {
+                        const due = g.total - g.paid;
+                        if (due > 30) {
+                            foundDue = true;
+                            html += `<div class="p-3 bg-red-50 border-l-4 border-red-500 rounded shadow-sm">
+                                <p class="font-bold text-red-700">${g.name} (${g.year}) - ${g.land} শতাংশ</p>
+                                <p class="text-sm">বকেয়া: <span class="font-bold">${due.toFixed(2)} টাকা</span></p>
+                            </div>`;
+                        }
+                    });
+                    if(!foundDue) html += '<p class="text-center text-green-600 font-bold py-4">কারো বকেয়া নেই!</p>';
+                }
+                
+                html += '</div>';
+                document.getElementById('statusCard').innerHTML = html;
+            } else {
+                document.getElementById('statusCard').innerHTML = '<p class="text-center text-gray-500 py-4">কোনো ডাটা পাওয়া যায়নি</p>';
+            }
+        };
+
+        // --- DATA BUTTON LOGIC (Needs Name & Year) ---
+        const getData = async () => {
+            const name = document.getElementById('searchNameVal').value;
+            const year = document.getElementById('searchYear').value;
+
+            // Validation Check
+            if (name === 'ALL' || year === 'ALL') {
+                alert('ডাটা দেখতে অবশ্যই নির্দিষ্ট নাম এবং বছর সিলেক্ট করতে হবে।');
+                return;
+            }
+
+            const d = await api('/api/getReportData', {
+                name: name,
+                land: document.getElementById('searchLand').value,
+                year: year
+            });
+            
+            document.getElementById('resultArea').classList.remove('hidden');
+            document.getElementById('statusCard').classList.add('hidden');
+            document.getElementById('dataCard').classList.remove('hidden');
+            
+            const tb = document.getElementById('tBody'); tb.innerHTML = '';
+            if(d.records.length === 0) tb.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-400">No Data</td></tr>';
+            else d.records.forEach(r => tb.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 border">${r.date}</td><td class="p-2 border">${r.name}</td><td class="p-2 border text-center">${r.land}</td><td class="p-2 border text-center">${r.rate}</td><td class="p-2 border text-right">${r.total}</td><td class="p-2 border text-right">${r.given}</td><td class="p-2 border text-center">${r.hariYear || r.year}</td></tr>`);
+        };
+
+        const delData = async () => {
+            const n = document.getElementById('searchNameVal').value, y = document.getElementById('searchYear').value;
+            if (n === 'ALL' || y === 'ALL') return alert('Select specific name/year');
+            if(confirm('Delete?')) {
+                await api('/api/deleteRecords', { name: n, year: y });
+                document.getElementById('resultArea').classList.add('hidden');
+            }
+        };
+
+        // --- Settings Logic ---
+        const openSettings = () => { document.getElementById('settingsModal').classList.remove('hidden'); renderS_tbl(); };
+        const closeSettings = () => document.getElementById('settingsModal').classList.add('hidden');
+        
+        const renderS_tbl = () => {
+            const tb = document.getElementById('sTable'); tb.innerHTML = '';
+            if (profiles.length === 0) tb.innerHTML = '<tr><td colspan="5" class="text-center text-gray-400 p-4">No Profiles</td></tr>';
+            else profiles.forEach(p => tb.innerHTML += `<tr class="border-b hover:bg-gray-50">
+                <td class="p-3 border font-semibold">${p.name}</td>
+                <td class="p-3 border text-center">${p.land}</td>
+                <td class="p-3 border text-center">${p.hariBorsho || "-"}</td>
+                <td class="p-3 border text-center">${p.rate}</td>
+                <td class="p-3 border text-center flex gap-1 justify-center">
+                    <button onclick="editP('${p.name}', '${p.land}', '${p.rate}', '${p.hariBorsho||''}')" class="btn btn-warning px-3 py-1 rounded text-xs">Edit</button>
+                    <button onclick="delP('${p.name}', '${p.land}', '${p.rate}')" class="btn btn-danger px-1.5 py-0.5 rounded text-[10px] leading-tight">Del</button>
+                </td></tr>`);
+        };
+
+        const editP = (n, l, r, h) => {
+            document.getElementById('sName').value = n; document.getElementById('sLand').value = l; document.getElementById('sRate').value = r; document.getElementById('sHari').value = h;
+            document.getElementById('sOldName').value = n; document.getElementById('sOldLand').value = l; document.getElementById('sOldRate').value = r;
+        };
+
+        const saveProfile = async () => {
+            const d = {
+                name: document.getElementById('sName').value, land: document.getElementById('sLand').value, rate: document.getElementById('sRate').value, hariBorsho: document.getElementById('sHari').value,
+                oldName: document.getElementById('sOldName').value, oldLand: document.getElementById('sOldLand').value, oldRate: document.getElementById('sOldRate').value
+            };
+            if (!d.name || !d.land || !d.rate) return alert("Fill Name, Land, Rate");
+            const res = await api('/api/saveProfile', d);
+            if (res.success) {
+                await init();
+                renderS_tbl();
+                document.getElementById('sName').value = ''; document.getElementById('sLand').value = ''; document.getElementById('sRate').value = ''; document.getElementById('sHari').value = '';
+                document.getElementById('sOldName').value = ''; document.getElementById('sOldLand').value = ''; document.getElementById('sOldRate').value = '';
+                alert("Saved!");
+            } else alert("Error: " + res.message);
+        };
+
+        const delP = async (n, l, r) => {
+            if(confirm('Delete Profile?')) {
+                await api('/api/deleteProfile', { name: n, land: l, rate: r });
+                await init();
+                renderS_tbl();
+            }
+        };
+
+        // Listeners
+        document.getElementById('entryName').addEventListener('focus', function() { document.getElementById('nameDD').classList.remove('hidden'); this.select(); });
+        document.getElementById('searchName').addEventListener('focus', function() { document.getElementById('searchDD').classList.remove('hidden'); this.select(); });
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#entryName') && !e.target.closest('#nameDD')) document.getElementById('nameDD').classList.add('hidden');
+            if (!e.target.closest('#searchName') && !e.target.closest('#searchDD')) document.getElementById('searchDD').classList.add('hidden');
+        });
+
+        // Session Check
+        if (localStorage.getItem('s')) {
+            const s = JSON.parse(localStorage.getItem('s'));
+            user = { name: s.u };
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('appSection').classList.remove('hidden');
+            init();
+            startIdleMonitor();
+        }
+    </script>
+</body>
+</html>
