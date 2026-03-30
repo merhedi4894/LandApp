@@ -85,11 +85,11 @@
                     </div>
                     <div>
                         <label class="text-xs font-semibold text-gray-600" data-lang="tk_given">টাকা</label>
-                        <input type="number" id="entryTk" class="input-field w-full px-3 py-2 rounded-lg">
+                        <input type="text" id="entryTk" class="input-field w-full px-3 py-2 rounded-lg" placeholder="e.g. 500 or ৫০০">
                     </div>
                     <div>
                         <label class="text-xs font-semibold text-gray-600" data-lang="lease_year">বছর</label>
-                        <input type="text" id="entryYear" class="input-field w-full px-3 py-2 rounded-lg bg-white" placeholder="e.g. 2025">
+                        <input type="text" id="entryYear" class="input-field w-full px-3 py-2 rounded-lg bg-white" placeholder="e.g. 2025 or ২০২৫">
                     </div>
                     <div><button type="submit" class="btn btn-primary w-full py-2 rounded-lg font-semibold" data-lang="save_btn">Save</button></div>
                 </form>
@@ -181,6 +181,13 @@
 
         let user = null, profiles = [], sMap = {}, yMap = {}, names = [];
         
+        // --- Helper: Bengali to English Number Converter ---
+        const toEnglishDigits = (str) => {
+            if (!str) return str;
+            const map = { '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4', '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9' };
+            return String(str).replace(/[০-৯]/g, d => map[d]);
+        };
+
         // --- AUTO LOGOUT SETUP (10 Minutes) ---
         const IDLE_TIMEOUT = 10 * 60 * 1000;
         let idleTimer;
@@ -272,11 +279,20 @@
 
         document.getElementById('landForm').addEventListener('submit', async e => {
             e.preventDefault();
+            
+            // ইনপুট থেকে বাংলা সংখ্যা ইংরেজিতে কনভার্ট করা
+            const rawYear = document.getElementById('entryYear').value;
+            const rawTk = document.getElementById('entryTk').value;
+            
             const d = {
-                name: document.getElementById('entryName').value, land: document.getElementById('entryLand').value,
-                rate: document.getElementById('entryRate').value, tkGiven: document.getElementById('entryTk').value,
-                hariYear: document.getElementById('entryYear').value, loggedInUser: user.name
+                name: document.getElementById('entryName').value, 
+                land: document.getElementById('entryLand').value,
+                rate: document.getElementById('entryRate').value, 
+                tkGiven: toEnglishDigits(rawTk), // কনভার্টেড ভ্যালু
+                hariYear: toEnglishDigits(rawYear), // কনভার্টেড ভ্যালু
+                loggedInUser: user.name
             };
+            
             if (!d.name || !d.land || !d.rate) return alert("Fill fields");
             const res = await api('/api/saveFormData', d);
             if (res.success) {
@@ -372,10 +388,13 @@
                 return;
             }
 
+            // সার্চের সময় বছরটি ইংরেজিতে কনভার্ট করে পাঠানো
+            const cleanYear = toEnglishDigits(year);
+
             const d = await api('/api/getReportData', {
                 name: name,
                 land: document.getElementById('searchLand').value,
-                year: year
+                year: cleanYear
             });
             
             document.getElementById('resultArea').classList.remove('hidden');
@@ -387,16 +406,18 @@
             else d.records.forEach(r => tb.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 border">${r.date}</td><td class="p-2 border">${r.name}</td><td class="p-2 border text-center">${r.land}</td><td class="p-2 border text-center">${r.rate}</td><td class="p-2 border text-right">${r.total}</td><td class="p-2 border text-right">${r.given}</td><td class="p-2 border text-center">${r.hariYear || r.year}</td></tr>`);
         };
 
-        // --- DELETE LOGIC (UPDATED) ---
+        // --- DELETE LOGIC (Updated) ---
         const delData = async () => {
-            const n = document.getElementById('searchNameVal').value, y = document.getElementById('searchYear').value;
+            const n = document.getElementById('searchNameVal').value;
+            const y = document.getElementById('searchYear').value;
+            
             if (n === 'ALL' || y === 'ALL') return alert('Select specific name/year');
             if(confirm('Delete?')) {
-                const res = await api('/api/deleteRecords', { name: n, year: y });
+                const res = await api('/api/deleteRecords', { name: n, year: toEnglishDigits(y) });
                 if(res.success) {
                     document.getElementById('resultArea').classList.add('hidden');
-                    await init(); // Refresh data from server
-                    setSearchName('ALL', 'All Names'); // Reset dropdowns
+                    await init(); 
+                    setSearchName('ALL', 'All Names');
                     alert("Deleted successfully!");
                 } else {
                     alert("Error deleting data.");
@@ -449,7 +470,7 @@
                 if(res.success) {
                     await init();
                     renderS_tbl();
-                    setSearchName('ALL', 'All Names'); // Reset search dropdowns
+                    setSearchName('ALL', 'All Names');
                     alert("Profile Deleted");
                 }
             }
