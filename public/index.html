@@ -19,37 +19,45 @@
         .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
         .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
         
-        /* Modal Overlay - Base z-index */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 15px; }
+        /* Base Modal Overlay */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9998; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); padding: 15px; }
         
-        /* FIX: Confirm Modal will be ON TOP of Settings Modal */
-        #confirmModal { z-index: 10000; }
-
         .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #0ea5e9; max-height: 200px; overflow-y: auto; z-index: 50; border-radius: 0 0 8px 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         
-        /* Toast Notification Styles - CENTER OF SCREEN */
-        #toast-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 99999; display: flex; flex-direction: column; gap: 10px; align-items: center; pointer-events: none; }
-        .toast { padding: 15px 30px; border-radius: 10px; color: white; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: popIn 0.3s ease-out; text-align: center; min-width: 250px; font-size: 18px; pointer-events: auto; }
+        /* Toast Notification Styles - CENTER OF SCREEN (Fixed) */
+        #toast-container { 
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            z-index: 999999; /* Highest z-index */
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            align-items: center; 
+            pointer-events: none; /* Let clicks pass through */
+        }
+        .toast { 
+            padding: 15px 30px; 
+            border-radius: 10px; 
+            color: white; 
+            font-weight: 600; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
+            animation: popIn 0.3s ease-out; 
+            text-align: center; 
+            min-width: 280px; 
+            font-size: 18px; 
+            pointer-events: auto;
+        }
         .toast.success { background-color: #10b981; }
         .toast.error { background-color: #ef4444; }
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body class="p-2 sm:p-4 md:p-6">
 
     <!-- Toast Container -->
     <div id="toast-container"></div>
-
-    <!-- Custom Confirm Modal (Higher z-index) -->
-    <div id="confirmModal" class="hidden modal-overlay">
-        <div class="bg-white rounded-xl p-6 text-center max-w-sm shadow-2xl border-2 border-red-200">
-            <p id="confirmMessage" class="text-red-600 font-bold text-xl mb-6">Are you want to delete?</p>
-            <div class="flex justify-center gap-4">
-                <button onclick="executeConfirm()" class="btn btn-danger px-6 py-2 rounded-lg">Yes, Delete</button>
-                <button onclick="closeConfirm()" class="btn bg-gray-300 text-black px-6 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
-            </div>
-        </div>
-    </div>
 
     <!-- LOGIN -->
     <div id="loginSection" class="max-w-md mx-auto">
@@ -149,7 +157,8 @@
                     <div class="flex gap-2">
                         <button onclick="getDue()" class="btn btn-success px-3 rounded-lg flex-1" data-lang="due_btn">Due</button>
                         <button onclick="getData()" class="btn bg-purple-600 px-3 rounded-lg flex-1" data-lang="data_btn">Data</button>
-                        <button onclick="delData()" class="btn btn-danger px-3 rounded-lg" data-lang="del_btn">Delete</button>
+                        <!-- Delete button text handled by JS logic on load -->
+                        <button onclick="delData()" class="btn btn-danger px-3 rounded-lg" id="delBtnMain">Delete</button>
                     </div>
                 </div>
                 <div id="resultArea" class="hidden mt-4">
@@ -168,7 +177,7 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
+    <!-- Settings Modal (z-index 9998) -->
     <div id="settingsModal" class="hidden modal-overlay">
         <div class="bg-white rounded-2xl w-full max-w-3xl m-4 max-h-[90vh] flex flex-col">
             <div class="p-4 border-b bg-primary text-white rounded-t-2xl flex justify-between">
@@ -198,15 +207,38 @@
         </div>
     </div>
 
+    <!-- Confirm Delete Modal (Placed at end with HIGHEST z-index: 99999) -->
+    <div id="confirmModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99999; display: flex; align-items: center; justify-content: center;">
+        <div class="bg-white rounded-xl p-6 text-center max-w-sm shadow-2xl border-2 border-red-200">
+            <p id="confirmMessage" class="text-red-600 font-bold text-xl mb-6">Are you want to delete?</p>
+            <div class="flex justify-center gap-4">
+                <button onclick="executeConfirm()" class="btn btn-danger px-6 py-2 rounded-lg">Yes, Delete</button>
+                <button onclick="closeConfirm()" class="btn bg-gray-300 text-black px-6 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Language System
         let lang = 'bn';
         const trans = {
-            bn: { login_title: "লগইন", login_btn: "লগইন করুন", app_title: "ভূমি লিজ ব্যবস্থাপনা", settings_btn: "সেটিংস", logout_btn: "লগআউট", new_entry_title: "নতুন এন্ট্রি", name: "নাম", land: "জমি", hari_calc: "হারি গণনা", rate: "রেট", tk_given: "টাকা", lease_year: "বছর", save_btn: "সেভ", save_success: "সেভ হয়েছে!", search_title: "সার্চ", all_lands: "সব জমি", all_years: "সব বছর", due_btn: "বকেয়া", data_btn: "ডাটা", del_btn: "ডিলিট", t_date: "তারিখ", t_name: "নাম", t_land: "জমি", t_rate: "রেট", t_total: "মোট", t_given: "দেওয়া", t_year: "বছর", settings_title: "সেটিংস: প্রোফাইল", saved_pro: "সেভ করা প্রোফাইল", hari_start: "শুরু", action: "অ্যাকশন" },
-            en: { login_title: "Login", login_btn: "Login", app_title: "Land Lease Management", settings_btn: "Settings", logout_btn: "Logout", new_entry_title: "New Entry", name: "Name", land: "Land", hari_calc: "Lease Calc", rate: "Rate", tk_given: "Amount", lease_year: "Year", save_btn: "Save", save_success: "Saved!", search_title: "Search", all_lands: "All Lands", all_years: "All Years", due_btn: "Due", data_btn: "Data", del_btn: "Delete", t_date: "Date", t_name: "Name", t_land: "Land", t_rate: "Rate", t_total: "Total", t_given: "Given", t_year: "Year", settings_title: "Settings: Profiles", saved_pro: "Saved Profiles", hari_start: "Start", action: "Action" }
+            bn: { login_title: "লগইন", login_btn: "লগইন করুন", app_title: "ভূমি লিজ ব্যবস্থাপনা", settings_btn: "সেটিংস", logout_btn: "লগআউট", new_entry_title: "নতুন এন্ট্রি", name: "নাম", land: "জমি", hari_calc: "হারি গণনা", rate: "রেট", tk_given: "টাকা", lease_year: "বছর", save_btn: "সেভ", search_title: "সার্চ", all_lands: "সব জমি", all_years: "সব বছর", due_btn: "বকেয়া", data_btn: "ডাটা", t_date: "তারিখ", t_name: "নাম", t_land: "জমি", t_rate: "রেট", t_total: "মোট", t_given: "দেওয়া", t_year: "বছর", settings_title: "সেটিংস: প্রোফাইল", saved_pro: "সেভ করা প্রোফাইল", hari_start: "শুরু", action: "অ্যাকশন" },
+            en: { login_title: "Login", login_btn: "Login", app_title: "Land Lease Management", settings_btn: "Settings", logout_btn: "Logout", new_entry_title: "New Entry", name: "Name", land: "Land", hari_calc: "Lease Calc", rate: "Rate", tk_given: "Amount", lease_year: "Year", save_btn: "Save", search_title: "Search", all_lands: "All Lands", all_years: "All Years", due_btn: "Due", data_btn: "Data", t_date: "Date", t_name: "Name", t_land: "Land", t_rate: "Rate", t_total: "Total", t_given: "Given", t_year: "Year", settings_title: "Settings: Profiles", saved_pro: "Saved Profiles", hari_start: "Start", action: "Action" }
         };
 
-        const setLang = () => { document.querySelectorAll('[data-lang]').forEach(el => { const k = el.getAttribute('data-lang'); if(trans[lang][k]) el.innerText = trans[lang][k]; }); document.getElementById('langBtn').innerText = lang === 'bn' ? 'EN' : 'বাং'; };
+        // Set Language Function
+        const setLang = () => { 
+            document.querySelectorAll('[data-lang]').forEach(el => { 
+                const k = el.getAttribute('data-lang'); 
+                if(trans[lang][k]) el.innerText = trans[lang][k]; 
+            }); 
+            document.getElementById('langBtn').innerText = lang === 'bn' ? 'EN' : 'বাং'; 
+            
+            // Update Delete Button Text in Search Section explicitly
+            const delBtnMain = document.getElementById('delBtnMain');
+            if(delBtnMain) delBtnMain.innerText = lang === 'bn' ? 'ডিলিট' : 'Delete';
+        };
+        
         const toggleLang = () => { lang = lang === 'bn' ? 'en' : 'bn'; setLang(); renderS_tbl(); };
 
         let user = null, profiles = [], names = [], sMap = {}, yMap = {};
@@ -214,7 +246,7 @@
         
         const toEnglishDigits = (str) => { if (!str) return str; const map = { '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4', '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9' }; return String(str).replace(/[০-৯]/g, d => map[d]); };
         
-        // --- TOAST NOTIFICATION SYSTEM (CENTER) ---
+        // --- TOAST NOTIFICATION (CENTER) ---
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -465,13 +497,26 @@
         const openSettings = () => { document.getElementById('settingsModal').classList.remove('hidden'); renderS_tbl(); };
         const closeSettings = () => document.getElementById('settingsModal').classList.add('hidden');
         
+        // Render Settings Table with Dynamic Button Text
         const renderS_tbl = () => { 
             const tb = document.getElementById('sTable'); 
             tb.innerHTML = ''; 
+            const deleteText = lang === 'bn' ? 'ডিলিট' : 'Delete'; // Define text
+            const editText = lang === 'bn' ? 'এডিট' : 'Edit';
+
             if (profiles.length === 0) tb.innerHTML = `<tr><td colspan="5" class="text-center text-gray-400 p-4">${lang === 'bn' ? 'কোনো প্রোফাইল নেই' : 'No Profiles'}</td></tr>`; 
             else profiles.forEach(p => {
-                const delText = lang === 'bn' ? 'ডিলিট' : 'Delete';
-                tb.innerHTML += `<tr class="border-b hover:bg-gray-50"><td class="p-3 border font-semibold">${p.name}</td><td class="p-3 border text-center">${p.land}</td><td class="p-3 border text-center">${p.hariBorsho || "-"}</td><td class="p-3 border text-center">${p.rate}</td><td class="p-3 border text-center flex gap-1 justify-center"><button onclick="editP('${p.name}', '${p.land}', '${p.rate}', '${p.hariBorsho||''}')" class="btn btn-warning px-3 py-1 rounded text-xs">${lang === 'bn' ? 'এডিট' : 'Edit'}</button><button onclick="delP('${p.name}', '${p.land}', '${p.rate}')" class="btn btn-danger px-1.5 py-0.5 rounded text-[10px] leading-tight">${delText}</button></td></tr>`;
+                // Using deleteText variable inside the HTML string
+                tb.innerHTML += `<tr class="border-b hover:bg-gray-50">
+                    <td class="p-3 border font-semibold">${p.name}</td>
+                    <td class="p-3 border text-center">${p.land}</td>
+                    <td class="p-3 border text-center">${p.hariBorsho || "-"}</td>
+                    <td class="p-3 border text-center">${p.rate}</td>
+                    <td class="p-3 border text-center flex gap-1 justify-center">
+                        <button onclick="editP('${p.name}', '${p.land}', '${p.rate}', '${p.hariBorsho||''}')" class="btn btn-warning px-3 py-1 rounded text-xs">${editText}</button>
+                        <button onclick="delP('${p.name}', '${p.land}', '${p.rate}')" class="btn btn-danger px-1.5 py-0.5 rounded text-[10px] leading-tight">${deleteText}</button>
+                    </td>
+                </tr>`; 
             }); 
         };
 
