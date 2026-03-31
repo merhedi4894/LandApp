@@ -34,7 +34,6 @@
             <form id="loginForm">
                 <input type="text" id="username" value="mehedi4894" class="input-field w-full px-4 py-3 rounded-lg mb-4 bg-gray-100 font-semibold" required>
                 
-                <!-- Password Field with Eye Icon -->
                 <div class="relative mb-4">
                     <input type="password" id="password" placeholder="Password" class="input-field w-full px-4 py-3 rounded-lg pr-12" required>
                     <button type="button" onclick="togglePassVisibility()" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-primary focus:outline-none">
@@ -103,7 +102,9 @@
                         <label class="text-xs font-semibold text-gray-600" data-lang="lease_year">বছর</label>
                         <input type="text" id="entryYear" class="input-field w-full px-3 py-2 rounded-lg bg-white" placeholder="e.g. 2025">
                     </div>
-                    <div><button type="submit" class="btn btn-primary w-full py-2 rounded-lg font-semibold" data-lang="save_btn">Save</button></div>
+                    <div>
+                        <button type="submit" id="saveEntryBtn" class="btn btn-primary w-full py-2 rounded-lg font-semibold" data-lang="save_btn">Save</button>
+                    </div>
                 </form>
                 <div id="msg" class="hidden text-green-600 text-center text-sm mt-2 font-semibold" data-lang="save_success">Saved!</div>
             </div>
@@ -182,30 +183,16 @@
         const setLang = () => { document.querySelectorAll('[data-lang]').forEach(el => { const k = el.getAttribute('data-lang'); if(trans[lang][k]) el.innerText = trans[lang][k]; }); document.getElementById('langBtn').innerText = lang === 'bn' ? 'EN' : 'বাং'; };
         const toggleLang = () => { lang = lang === 'bn' ? 'en' : 'bn'; setLang(); };
 
-        // Global Variables Initialized Empty
-        let user = null;
-        let profiles = []; // For New Entry
-        let names = [];    // For Search
-        let sMap = {};     // For Search Land
-        let yMap = {};     // For Search Year
+        let user = null, profiles = [], names = [], sMap = {}, yMap = {};
         
         const toEnglishDigits = (str) => { if (!str) return str; const map = { '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4', '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9' }; return String(str).replace(/[০-৯]/g, d => map[d]); };
         
-        // --- PASSWORD VISIBILITY TOGGLE ---
         function togglePassVisibility() {
             const passInput = document.getElementById('password');
             const eyeOpen = document.getElementById('eyeOpen');
             const eyeOff = document.getElementById('eyeOff');
-
-            if (passInput.type === 'password') {
-                passInput.type = 'text';
-                eyeOpen.classList.add('hidden'); 
-                eyeOff.classList.remove('hidden'); 
-            } else {
-                passInput.type = 'password';
-                eyeOpen.classList.remove('hidden'); 
-                eyeOff.classList.add('hidden'); 
-            }
+            if (passInput.type === 'password') { passInput.type = 'text'; eyeOpen.classList.add('hidden'); eyeOff.classList.remove('hidden'); } 
+            else { passInput.type = 'password'; eyeOpen.classList.remove('hidden'); eyeOff.classList.add('hidden'); }
         }
 
         // --- AUTO LOGOUT (5 Minutes) ---
@@ -221,7 +208,18 @@
         }
         function resetIdleTimer() { clearTimeout(idleTimer); idleTimer = setTimeout(logout, IDLE_TIMEOUT); }
 
-        const api = (url, data = {}) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(r => r.json());
+        // API with Cache Busting
+        const api = (url, data = {}) => {
+            // Add timestamp to URL to prevent browser caching
+            const separator = url.includes('?') ? '&' : '?';
+            const cacheUrl = url + separator + 't=' + new Date().getTime();
+            
+            return fetch(cacheUrl, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(data) 
+            }).then(r => r.json());
+        };
 
         // Login
         document.getElementById('loginForm').addEventListener('submit', async e => {
@@ -235,32 +233,29 @@
 
         // Load Data
         async function init() {
+            // Clear dropdowns immediately before fetching
+            document.getElementById('nameDD').innerHTML = '';
+            document.getElementById('searchDD').innerHTML = '';
+            
             const d = await api('/api/getInitData');
             
-            // 1. Profiles for New Entry (From Settings)
             profiles = d.profiles || [];
-            
-            // 2. Data for Search Section (From Records Only)
             const opt = d.searchOptions || {}; 
             
-            // Assigning data safely
             names = opt.names || []; 
             sMap = opt.landMap || {}; 
             yMap = opt.yearMap || {}; 
             
-            // --- New Entry Dropdown Setup ---
+            // --- New Entry Dropdown ---
             const ndd = document.getElementById('nameDD'); 
-            ndd.innerHTML = ''; 
             const profileNames = [...new Set(profiles.map(p => p.name))].sort();
             profileNames.forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
             
-            // --- Search Dropdown Setup ---
+            // --- Search Dropdown ---
             const sdd = document.getElementById('searchDD'); 
             sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`; 
             names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
 
-            // --- Force Reset Search Fields on Load ---
-            // This ensures no old data stays in the fields
             resetSearchDropdowns();
 
             if (!document.getElementById('settingsModal').classList.contains('hidden')) renderS_tbl(); 
@@ -270,37 +265,24 @@
         function resetSearchDropdowns() {
             document.getElementById('searchNameVal').value = 'ALL';
             document.getElementById('searchName').value = 'All Names';
-            
-            // Reset Land Dropdown
-            const lSel = document.getElementById('searchLand'); 
-            lSel.innerHTML = '<option value="ALL">All Lands</option>';
-            
-            // Reset Year Dropdown
-            const ySel = document.getElementById('searchYear'); 
-            ySel.innerHTML = '<option value="ALL">All Years</option>';
+            const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>';
+            const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>';
         }
 
         // Entry Logic
         const setEntryName = n => { 
             document.getElementById('entryName').value = n; 
             document.getElementById('nameDD').classList.add('hidden'); 
-            
             const m = profiles.filter(p => p.name === n); 
             const lSel = document.getElementById('entryLand'); 
             lSel.innerHTML = '<option value="">Select</option>'; 
-            
             m.forEach(p => lSel.innerHTML += `<option value="${p.land}">${p.land}</option>`); 
-            
-            if (m.length === 1) { 
-                lSel.value = m[0].land; 
-                updateRate(); 
-            } 
+            if (m.length === 1) { lSel.value = m[0].land; updateRate(); } 
         };
 
         const updateRate = () => { 
             const n = document.getElementById('entryName').value, l = document.getElementById('entryLand').value; 
             const p = profiles.find(x => x.name === n && x.land == l); 
-            
             if (p) { 
                 document.getElementById('entryRate').innerHTML = `<option value="${p.rate}">${p.rate}</option>`; 
                 document.getElementById('entryRate').value = p.rate; 
@@ -311,11 +293,31 @@
             }
         };
 
+        // Save with Loading State
         document.getElementById('landForm').addEventListener('submit', async e => {
             e.preventDefault();
+            const btn = document.getElementById('saveEntryBtn');
+            const originalText = btn.innerText;
+            
+            // Show loading
+            btn.innerText = "Saving...";
+            btn.disabled = true;
+
             const d = { name: document.getElementById('entryName').value, land: document.getElementById('entryLand').value, rate: document.getElementById('entryRate').value, tkGiven: toEnglishDigits(document.getElementById('entryTk').value), hariYear: toEnglishDigits(document.getElementById('entryYear').value), loggedInUser: user.name };
-            if (!d.name || !d.land || !d.rate) return alert("Fill fields");
+            
+            if (!d.name || !d.land || !d.rate) {
+                alert("Fill fields");
+                btn.innerText = originalText;
+                btn.disabled = false;
+                return;
+            }
+
             const res = await api('/api/saveFormData', d);
+            
+            // Reset button
+            btn.innerText = originalText;
+            btn.disabled = false;
+
             if (res.success) { 
                 document.getElementById('msg').classList.remove('hidden'); 
                 e.target.reset(); 
@@ -361,7 +363,7 @@
                             html += `<div class="p-3 bg-red-50 border-l-4 border-red-500 rounded shadow-sm"><p class="font-bold text-red-700">${g.name}</p><p class="text-sm">${g.year} সাল, ${g.land} শতাংশ জমির বকেয়া: <span class="font-bold">${due.toFixed(2)} টাকা</span></p></div>`; 
                         }
                     });
-                    if(!hasContent) html += '<p class="text-center text-green-600 font-bold py-4">কোনো বকেয়া নেই। সব পরিশোধ হয়েছে।</p>';
+                    if(!hasContent) html += '<p class="text-center text-green-600 font-bold py-4">কোনো বকেয়া নেই।</p>';
                 } else {
                     let foundDue = false; 
                     Object.values(groups).forEach(g => { 
