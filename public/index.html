@@ -117,6 +117,7 @@
                         <input type="hidden" id="searchNameVal" value="ALL">
                         <div id="searchDD" class="hidden dropdown-list"></div>
                     </div>
+                    <!-- Hardcoded options removed completely -->
                     <select id="searchLand" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL" data-lang="all_lands">All Lands</option></select>
                     <select id="searchYear" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL" data-lang="all_years">All Years</option></select>
                     <div class="flex gap-2">
@@ -236,49 +237,26 @@
             profiles = d.profiles || [];
             
             // ২. রেকর্ড ডাটা (শুধুমাত্র Search সেকশনের জন্য)
-            // এই ডাটাগুলো সার্ভার থেকে আসবে এবং এখানে শুধু সেভ করা এন্ট্রিগুলো থাকবে
             const opt = d.searchOptions || {}; 
             
-            // Search Section Variables
-            names = opt.names || []; // শুধু রেকর্ডে থাকা নাম
-            sMap = opt.landMap || {}; // শুধু রেকর্ডে থাকা জমি
-            yMap = opt.yearMap || {}; // শুধু রেকর্ডে থাকা সাল
+            // Search Section Variables (সার্ভার থেকে আসবে, কোডে কিছু থাকবে না)
+            names = opt.names || []; 
+            sMap = opt.landMap || {}; 
+            yMap = opt.yearMap || {}; 
             
             // --- New Entry Dropdown Setup (Uses Profiles) ---
             const ndd = document.getElementById('nameDD'); ndd.innerHTML = ''; 
-            // প্রোফাইল থেকে নাম বাছাই করে নতুন এন্ট্রিতে দেখানো হচ্ছে
             const profileNames = [...new Set(profiles.map(p => p.name))].sort();
             profileNames.forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
             
             // --- Search Dropdown Setup (Uses Records) ---
             const sdd = document.getElementById('searchDD'); 
             sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`; 
-            // রেকর্ড থেকে নাম বাছাই করে সার্চে দেখানো হচ্ছে
             names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
 
-            // --- Update Active Search State ---
-            const currentName = document.getElementById('searchNameVal').value;
-            
-            // যদি বর্তমান সিলেক্ট করা নামটি রেকর্ডে না থাকে (ডিলিট হয়ে গেছে)
-            if (currentName !== 'ALL' && !names.includes(currentName)) {
-                resetSearchDropdowns();
-            } else if (currentName === 'ALL') {
-                const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>';
-                const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>';
-            } else {
-                // নির্দিষ্ট নাম সিলেক্ট থাকলে Land/Year আপডেট
-                const lSel = document.getElementById('searchLand');
-                const currentLand = lSel.value;
-                lSel.innerHTML = '<option value="ALL">All Lands</option>';
-                if (sMap[currentName]) sMap[currentName].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`);
-                if (!sMap[currentName]?.includes(parseFloat(currentLand))) lSel.value = "ALL"; else lSel.value = currentLand;
-
-                const ySel = document.getElementById('searchYear');
-                const currentYear = ySel.value;
-                ySel.innerHTML = '<option value="ALL">All Years</option>';
-                if (yMap[currentName]) yMap[currentName].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`);
-                if (!yMap[currentName]?.includes(currentYear)) ySel.value = "ALL"; else ySel.value = currentYear;
-            }
+            // --- IMPORTANT: Reset Search Fields on Load ---
+            // এটি পেজ লোড হলে সার্চ ফিল্ডগুলো ফাঁকা করে দেবে
+            resetSearchDropdowns();
 
             if (!document.getElementById('settingsModal').classList.contains('hidden')) renderS_tbl(); setLang();
         }
@@ -290,12 +268,11 @@
             const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>';
         }
 
-        // Entry Logic (Uses Profiles)
+        // Entry Logic
         const setEntryName = n => { 
             document.getElementById('entryName').value = n; 
             document.getElementById('nameDD').classList.add('hidden'); 
             
-            // প্রোফাইল থেকে জমি ও রেট খুঁজে বের করা
             const m = profiles.filter(p => p.name === n); 
             const lSel = document.getElementById('entryLand'); 
             lSel.innerHTML = '<option value="">Select</option>'; 
@@ -331,12 +308,12 @@
                 document.getElementById('msg').classList.remove('hidden'); 
                 e.target.reset(); 
                 setTimeout(() => document.getElementById('msg').classList.add('hidden'), 1500); 
-                init(); // নতুন ডাটা সেভ হলে সার্চ ড্রপডাউন আপডেট হবে
+                init(); 
             }
             else alert("Error");
         });
 
-        // Search Logic (Uses Records Map)
+        // Search Logic
         const setSearchName = (v, t) => { 
             document.getElementById('searchNameVal').value = v; 
             document.getElementById('searchName').value = t; 
@@ -407,14 +384,8 @@
                 const res = await api('/api/deleteRecords', { name: n, year: toEnglishDigits(y) });
                 if(res.success) { 
                     document.getElementById('resultArea').classList.add('hidden'); 
-                    
-                    // ডিলিট সাকসেসফুল হলে:
-                    // ১. নতুন করে ডাটা লোড করা (init) -> এতে Search ড্রপডাউন আপডেট হবে
-                    await init(); 
-                    
-                    // ২. সার্চ ফিল্ড রিসেট করে দেওয়া
-                    resetSearchDropdowns(); 
-                    
+                    await init(); // Data reload
+                    resetSearchDropdowns(); // Reset fields
                     alert("Deleted successfully!"); 
                 }
                 else { alert("Error deleting data."); }
