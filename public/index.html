@@ -231,56 +231,52 @@
         // Load Data & Initialize Dropdowns
         async function init() {
             const d = await api('/api/getInitData');
+            
+            // ১. প্রোফাইল ডাটা (শুধুমাত্র New Entry সেকশনের জন্য)
             profiles = d.profiles || [];
+            
+            // ২. রেকর্ড ডাটা (শুধুমাত্র Search সেকশনের জন্য)
+            // এই ডাটাগুলো সার্ভার থেকে আসবে এবং এখানে শুধু সেভ করা এন্ট্রিগুলো থাকবে
             const opt = d.searchOptions || {}; 
             
-            // ১. নামের তালিকা (প্রোফাইল থেকে অটোমেটিক)
-            names = [...new Set(profiles.map(p => p.name))].sort();
-
-            // ২. জমির ম্যাপ (প্রোফাইল থেকে অটোমেটিক)
-            sMap = {};
-            profiles.forEach(p => {
-                if (!sMap[p.name]) sMap[p.name] = new Set();
-                sMap[p.name].add(p.land);
-            });
-            Object.keys(sMap).forEach(k => sMap[k] = [...sMap[k]]);
-
-            // ৩. সালের ম্যাপ (রেকর্ড থেকে আসবে)
-            yMap = opt.yearMap || {};
+            // Search Section Variables
+            names = opt.names || []; // শুধু রেকর্ডে থাকা নাম
+            sMap = opt.landMap || {}; // শুধু রেকর্ডে থাকা জমি
+            yMap = opt.yearMap || {}; // শুধু রেকর্ডে থাকা সাল
             
-            // --- New Entry Dropdown Setup ---
+            // --- New Entry Dropdown Setup (Uses Profiles) ---
             const ndd = document.getElementById('nameDD'); ndd.innerHTML = ''; 
-            names.forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
+            // প্রোফাইল থেকে নাম বাছাই করে নতুন এন্ট্রিতে দেখানো হচ্ছে
+            const profileNames = [...new Set(profiles.map(p => p.name))].sort();
+            profileNames.forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
             
-            // --- Search Dropdown Setup ---
+            // --- Search Dropdown Setup (Uses Records) ---
             const sdd = document.getElementById('searchDD'); 
             sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`; 
+            // রেকর্ড থেকে নাম বাছাই করে সার্চে দেখানো হচ্ছে
             names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
 
             // --- Update Active Search State ---
             const currentName = document.getElementById('searchNameVal').value;
             
+            // যদি বর্তমান সিলেক্ট করা নামটি রেকর্ডে না থাকে (ডিলিট হয়ে গেছে)
             if (currentName !== 'ALL' && !names.includes(currentName)) {
-                // যদি প্রোফাইল ডিলিট হয়ে যায় তাহলে রিসেট
                 resetSearchDropdowns();
             } else if (currentName === 'ALL') {
-                // All Names থাকলে Land/Year রিসেট
                 const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>';
                 const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>';
             } else {
-                // নির্দিষ্ট নাম সিলেক্ট থাকলে Land/Year আপডেট করা
+                // নির্দিষ্ট নাম সিলেক্ট থাকলে Land/Year আপডেট
                 const lSel = document.getElementById('searchLand');
                 const currentLand = lSel.value;
                 lSel.innerHTML = '<option value="ALL">All Lands</option>';
                 if (sMap[currentName]) sMap[currentName].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`);
-                // যদি আগের সিলেক্ট করা ল্যান্ড নতুন ডাটায় না থাকে তাহলে ALL করে দিন
                 if (!sMap[currentName]?.includes(parseFloat(currentLand))) lSel.value = "ALL"; else lSel.value = currentLand;
 
                 const ySel = document.getElementById('searchYear');
                 const currentYear = ySel.value;
                 ySel.innerHTML = '<option value="ALL">All Years</option>';
                 if (yMap[currentName]) yMap[currentName].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`);
-                // যদি আগের সিলেক্ট করা সাল নতুন ডাটায় না থাকে তাহলে ALL করে দিন
                 if (!yMap[currentName]?.includes(currentYear)) ySel.value = "ALL"; else ySel.value = currentYear;
             }
 
@@ -294,28 +290,24 @@
             const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>';
         }
 
-        // Entry Logic
-        // নাম সিলেক্ট করলে প্রোফাইল থেকে জমি ও রেট অটো আসবে
+        // Entry Logic (Uses Profiles)
         const setEntryName = n => { 
             document.getElementById('entryName').value = n; 
             document.getElementById('nameDD').classList.add('hidden'); 
             
-            // এই নামের সব প্রোফাইল খুঁজে বের করা
+            // প্রোফাইল থেকে জমি ও রেট খুঁজে বের করা
             const m = profiles.filter(p => p.name === n); 
             const lSel = document.getElementById('entryLand'); 
             lSel.innerHTML = '<option value="">Select</option>'; 
             
-            // জমির অপশন পূরণ করা
             m.forEach(p => lSel.innerHTML += `<option value="${p.land}">${p.land}</option>`); 
             
-            // যদি শুধু একটি প্রোফাইল থাকে তাহলে অটো সিলেক্ট করা
             if (m.length === 1) { 
                 lSel.value = m[0].land; 
                 updateRate(); 
             } 
         };
 
-        // জমি সিলেক্ট করলে রেট অটো আসবে
         const updateRate = () => { 
             const n = document.getElementById('entryName').value, l = document.getElementById('entryLand').value; 
             const p = profiles.find(x => x.name === n && x.land == l); 
@@ -344,7 +336,7 @@
             else alert("Error");
         });
 
-        // Search Logic
+        // Search Logic (Uses Records Map)
         const setSearchName = (v, t) => { 
             document.getElementById('searchNameVal').value = v; 
             document.getElementById('searchName').value = t; 
@@ -417,10 +409,10 @@
                     document.getElementById('resultArea').classList.add('hidden'); 
                     
                     // ডিলিট সাকসেসফুল হলে:
-                    // ১. নতুন করে ডাটা লোড করা (init)
+                    // ১. নতুন করে ডাটা লোড করা (init) -> এতে Search ড্রপডাউন আপডেট হবে
                     await init(); 
                     
-                    // ২. সার্চ ফিল্ড রিসেট করে দেওয়া (যাতে ডিলিট করা ডাটা ফিল্ডে না থাকে)
+                    // ২. সার্চ ফিল্ড রিসেট করে দেওয়া
                     resetSearchDropdowns(); 
                     
                     alert("Deleted successfully!"); 
@@ -435,7 +427,7 @@
         const renderS_tbl = () => { const tb = document.getElementById('sTable'); tb.innerHTML = ''; if (profiles.length === 0) tb.innerHTML = '<tr><td colspan="5" class="text-center text-gray-400 p-4">No Profiles</td></tr>'; else profiles.forEach(p => tb.innerHTML += `<tr class="border-b hover:bg-gray-50"><td class="p-3 border font-semibold">${p.name}</td><td class="p-3 border text-center">${p.land}</td><td class="p-3 border text-center">${p.hariBorsho || "-"}</td><td class="p-3 border text-center">${p.rate}</td><td class="p-3 border text-center flex gap-1 justify-center"><button onclick="editP('${p.name}', '${p.land}', '${p.rate}', '${p.hariBorsho||''}')" class="btn btn-warning px-3 py-1 rounded text-xs">Edit</button><button onclick="delP('${p.name}', '${p.land}', '${p.rate}')" class="btn btn-danger px-1.5 py-0.5 rounded text-[10px] leading-tight">Del</button></td></tr>`); };
         const editP = (n, l, r, h) => { document.getElementById('sName').value = n; document.getElementById('sLand').value = l; document.getElementById('sRate').value = r; document.getElementById('sHari').value = h; document.getElementById('sOldName').value = n; document.getElementById('sOldLand').value = l; document.getElementById('sOldRate').value = r; };
         const saveProfile = async () => { const d = { name: document.getElementById('sName').value, land: document.getElementById('sLand').value, rate: document.getElementById('sRate').value, hariBorsho: document.getElementById('sHari').value, oldName: document.getElementById('sOldName').value, oldLand: document.getElementById('sOldLand').value, oldRate: document.getElementById('sOldRate').value }; if (!d.name || !d.land || !d.rate) return alert("Fill Name, Land, Rate"); const res = await api('/api/saveProfile', d); if (res.success) { await init(); renderS_tbl(); document.getElementById('sName').value = ''; document.getElementById('sLand').value = ''; document.getElementById('sRate').value = ''; document.getElementById('sHari').value = ''; document.getElementById('sOldName').value = ''; document.getElementById('sOldLand').value = ''; document.getElementById('sOldRate').value = ''; alert("Saved!"); } else alert("Error: " + res.message); };
-        const delP = async (n, l, r) => { if(confirm('Delete Profile?')) { const res = await api('/api/deleteProfile', { name: n, land: l, rate: r }); if(res.success) { await init(); renderS_tbl(); resetSearchDropdowns(); alert("Profile Deleted"); } } };
+        const delP = async (n, l, r) => { if(confirm('Delete Profile?')) { const res = await api('/api/deleteProfile', { name: n, land: l, rate: r }); if(res.success) { await init(); renderS_tbl(); alert("Profile Deleted"); } } };
 
         // Listeners
         document.getElementById('entryName').addEventListener('focus', function() { document.getElementById('nameDD').classList.remove('hidden'); this.select(); });
