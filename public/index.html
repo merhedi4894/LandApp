@@ -20,9 +20,19 @@
         .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 15px; }
         .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #0ea5e9; max-height: 200px; overflow-y: auto; z-index: 50; border-radius: 0 0 8px 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        /* Toast Notification Styles */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 12px 20px; border-radius: 8px; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.3s ease-out; }
+        .toast.success { background-color: #10b981; }
+        .toast.error { background-color: #ef4444; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body class="p-2 sm:p-4 md:p-6">
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
 
     <!-- LOGIN -->
     <div id="loginSection" class="max-w-md mx-auto">
@@ -106,7 +116,7 @@
                         <button type="submit" id="saveEntryBtn" class="btn btn-primary w-full py-2 rounded-lg font-semibold" data-lang="save_btn">Save</button>
                     </div>
                 </form>
-                <div id="msg" class="hidden text-green-600 text-center text-sm mt-2 font-semibold" data-lang="save_success">Saved!</div>
+                <!-- Old inline message removed, now using Toast -->
             </div>
 
             <!-- Search -->
@@ -118,7 +128,6 @@
                         <input type="hidden" id="searchNameVal" value="ALL">
                         <div id="searchDD" class="hidden dropdown-list"></div>
                     </div>
-                    <!-- Land এবং Year এখানে অটো আপডেট হবে -->
                     <select id="searchLand" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL" data-lang="all_lands">All Lands</option></select>
                     <select id="searchYear" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL" data-lang="all_years">All Years</option></select>
                     <div class="flex gap-2">
@@ -188,6 +197,21 @@
         
         const toEnglishDigits = (str) => { if (!str) return str; const map = { '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4', '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9' }; return String(str).replace(/[০-৯]/g, d => map[d]); };
         
+        // --- TOAST NOTIFICATION SYSTEM ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+
+            // Auto remove after 2 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
         function togglePassVisibility() {
             const passInput = document.getElementById('password');
             const eyeOpen = document.getElementById('eyeOpen');
@@ -232,16 +256,17 @@
 
         // Load Data
         async function init() {
-            // Clear previous data immediately
+            // Clear UI immediately
             document.getElementById('nameDD').innerHTML = '';
             document.getElementById('searchDD').innerHTML = '';
             resetSearchDropdowns();
 
             const d = await api('/api/getInitData');
             
-            // --- DEBUGGING: Check Console (F12) to see what server returns ---
-            console.log("Server Data Received:", d);
-            // ------------------------------------------------------------------
+            // --- DEBUGGING: Check Console (F12) ---
+            // If you see "Mosto" here, the problem is in your Google Sheet or Backend Code.
+            console.log("Data from Server:", d); 
+            // ---------------------------------------
 
             profiles = d.profiles || [];
             const opt = d.searchOptions || {}; 
@@ -250,12 +275,12 @@
             sMap = opt.landMap || {}; 
             yMap = opt.yearMap || {}; 
             
-            // --- New Entry Dropdown (From Profiles) ---
+            // --- New Entry Dropdown (Profiles) ---
             const ndd = document.getElementById('nameDD'); 
             const profileNames = [...new Set(profiles.map(p => p.name))].sort();
             profileNames.forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
             
-            // --- Search Dropdown (From Records) ---
+            // --- Search Dropdown (Records) ---
             const sdd = document.getElementById('searchDD'); 
             sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`; 
             names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
@@ -295,7 +320,7 @@
             }
         };
 
-        // Save with Loading State
+        // Save Entry with Toast
         document.getElementById('landForm').addEventListener('submit', async e => {
             e.preventDefault();
             const btn = document.getElementById('saveEntryBtn');
@@ -307,7 +332,7 @@
             const d = { name: document.getElementById('entryName').value, land: document.getElementById('entryLand').value, rate: document.getElementById('entryRate').value, tkGiven: toEnglishDigits(document.getElementById('entryTk').value), hariYear: toEnglishDigits(document.getElementById('entryYear').value), loggedInUser: user.name };
             
             if (!d.name || !d.land || !d.rate) {
-                alert("Fill fields");
+                showToast("Fill all required fields", "error");
                 btn.innerText = originalText;
                 btn.disabled = false;
                 return;
@@ -319,28 +344,29 @@
             btn.disabled = false;
 
             if (res.success) { 
-                document.getElementById('msg').classList.remove('hidden'); 
                 e.target.reset(); 
-                setTimeout(() => document.getElementById('msg').classList.add('hidden'), 1500); 
+                showToast("Saved Successfully!", "success");
                 init(); 
             }
-            else alert("Error saving data.");
+            else {
+                showToast("Error saving data", "error");
+            }
         });
 
-        // Search Logic: Auto-fill Land & Year based on Name
+        // Search Logic: Auto-fill Land & Year
         const setSearchName = (nameVal, displayName) => { 
             document.getElementById('searchNameVal').value = nameVal; 
             document.getElementById('searchName').value = displayName; 
             document.getElementById('searchDD').classList.add('hidden'); 
             
-            // 1. Update Land Dropdown based on Name
+            // 1. Update Land
             const lSel = document.getElementById('searchLand'); 
             lSel.innerHTML = '<option value="ALL">All Lands</option>'; 
             if (nameVal !== 'ALL' && sMap[nameVal]) {
                 sMap[nameVal].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`);
             }
 
-            // 2. Update Year Dropdown based on Name
+            // 2. Update Year
             const ySel = document.getElementById('searchYear'); 
             ySel.innerHTML = '<option value="ALL">All Years</option>'; 
             if (nameVal !== 'ALL' && yMap[nameVal]) {
@@ -388,7 +414,7 @@
         // Data Logic
         const getData = async () => {
             const name = document.getElementById('searchNameVal').value; const year = document.getElementById('searchYear').value;
-            if (name === 'ALL' || year === 'ALL') { alert('ডাটা দেখতে নির্দিষ্ট নাম এবং বছর সিলেক্ট করুন।'); return; }
+            if (name === 'ALL' || year === 'ALL') { showToast('Select specific name & year', 'error'); return; }
             const d = await api('/api/getReportData', { name: name, land: document.getElementById('searchLand').value, year: toEnglishDigits(year) });
             document.getElementById('resultArea').classList.remove('hidden'); document.getElementById('statusCard').classList.add('hidden'); document.getElementById('dataCard').classList.remove('hidden');
             const tb = document.getElementById('tBody'); tb.innerHTML = '';
@@ -396,18 +422,18 @@
             else d.records.forEach(r => tb.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 border">${r.date}</td><td class="p-2 border">${r.name}</td><td class="p-2 border text-center">${r.land}</td><td class="p-2 border text-center">${r.rate}</td><td class="p-2 border text-right">${r.total}</td><td class="p-2 border text-right">${r.given}</td><td class="p-2 border text-center">${r.hariYear || r.year}</td></tr>`);
         };
 
-        // Delete Logic
+        // Delete Logic with Toast
         const delData = async () => {
             const n = document.getElementById('searchNameVal').value; const y = document.getElementById('searchYear').value;
-            if (n === 'ALL' || y === 'ALL') return alert('Select specific name/year');
-            if(confirm('Delete?')) {
+            if (n === 'ALL' || y === 'ALL') { showToast('Select specific name/year', 'error'); return; }
+            if(confirm('Are you sure to delete?')) {
                 const res = await api('/api/deleteRecords', { name: n, year: toEnglishDigits(y) });
                 if(res.success) { 
                     document.getElementById('resultArea').classList.add('hidden'); 
                     await init(); 
-                    alert("Deleted successfully!"); 
+                    showToast("Deleted Successfully!", "success");
                 }
-                else { alert("Error deleting data."); }
+                else { showToast("Error deleting data", "error"); }
             }
         };
 
@@ -416,8 +442,26 @@
         const closeSettings = () => document.getElementById('settingsModal').classList.add('hidden');
         const renderS_tbl = () => { const tb = document.getElementById('sTable'); tb.innerHTML = ''; if (profiles.length === 0) tb.innerHTML = '<tr><td colspan="5" class="text-center text-gray-400 p-4">No Profiles</td></tr>'; else profiles.forEach(p => tb.innerHTML += `<tr class="border-b hover:bg-gray-50"><td class="p-3 border font-semibold">${p.name}</td><td class="p-3 border text-center">${p.land}</td><td class="p-3 border text-center">${p.hariBorsho || "-"}</td><td class="p-3 border text-center">${p.rate}</td><td class="p-3 border text-center flex gap-1 justify-center"><button onclick="editP('${p.name}', '${p.land}', '${p.rate}', '${p.hariBorsho||''}')" class="btn btn-warning px-3 py-1 rounded text-xs">Edit</button><button onclick="delP('${p.name}', '${p.land}', '${p.rate}')" class="btn btn-danger px-1.5 py-0.5 rounded text-[10px] leading-tight">Del</button></td></tr>`); };
         const editP = (n, l, r, h) => { document.getElementById('sName').value = n; document.getElementById('sLand').value = l; document.getElementById('sRate').value = r; document.getElementById('sHari').value = h; document.getElementById('sOldName').value = n; document.getElementById('sOldLand').value = l; document.getElementById('sOldRate').value = r; };
-        const saveProfile = async () => { const d = { name: document.getElementById('sName').value, land: document.getElementById('sLand').value, rate: document.getElementById('sRate').value, hariBorsho: document.getElementById('sHari').value, oldName: document.getElementById('sOldName').value, oldLand: document.getElementById('sOldLand').value, oldRate: document.getElementById('sOldRate').value }; if (!d.name || !d.land || !d.rate) return alert("Fill Name, Land, Rate"); const res = await api('/api/saveProfile', d); if (res.success) { await init(); renderS_tbl(); document.getElementById('sName').value = ''; document.getElementById('sLand').value = ''; document.getElementById('sRate').value = ''; document.getElementById('sHari').value = ''; document.getElementById('sOldName').value = ''; document.getElementById('sOldLand').value = ''; document.getElementById('sOldRate').value = ''; alert("Saved!"); } else alert("Error: " + res.message); };
-        const delP = async (n, l, r) => { if(confirm('Delete Profile?')) { const res = await api('/api/deleteProfile', { name: n, land: l, rate: r }); if(res.success) { await init(); renderS_tbl(); alert("Profile Deleted"); } } };
+        
+        const saveProfile = async () => { 
+            const d = { name: document.getElementById('sName').value, land: document.getElementById('sLand').value, rate: document.getElementById('sRate').value, hariBorsho: document.getElementById('sHari').value, oldName: document.getElementById('sOldName').value, oldLand: document.getElementById('sOldLand').value, oldRate: document.getElementById('sOldRate').value }; 
+            if (!d.name || !d.land || !d.rate) { showToast("Fill Name, Land, Rate", "error"); return; } 
+            const res = await api('/api/saveProfile', d); 
+            if (res.success) { 
+                await init(); renderS_tbl(); 
+                document.getElementById('sName').value = ''; document.getElementById('sLand').value = ''; document.getElementById('sRate').value = ''; document.getElementById('sHari').value = ''; document.getElementById('sOldName').value = ''; document.getElementById('sOldLand').value = ''; document.getElementById('sOldRate').value = ''; 
+                showToast("Profile Saved!", "success"); 
+            } else {
+                showToast("Error: " + res.message, "error");
+            }
+        };
+
+        const delP = async (n, l, r) => { 
+            if(confirm('Delete Profile?')) { 
+                const res = await api('/api/deleteProfile', { name: n, land: l, rate: r }); 
+                if(res.success) { await init(); renderS_tbl(); showToast("Profile Deleted", "success"); } 
+            } 
+        };
 
         // Listeners
         document.getElementById('entryName').addEventListener('focus', function() { document.getElementById('nameDD').classList.remove('hidden'); this.select(); });
