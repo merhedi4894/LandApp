@@ -38,12 +38,10 @@
                 <div class="relative mb-4">
                     <input type="password" id="password" placeholder="Password" class="input-field w-full px-4 py-3 rounded-lg pr-12" required>
                     <button type="button" onclick="togglePassVisibility()" id="passToggleBtn" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-primary focus:outline-none">
-                        <!-- Eye Open Icon (Default) -->
                         <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                        <!-- Eye Closed Icon (Hidden by default) -->
                         <svg id="eyeOff" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                         </svg>
@@ -196,17 +194,17 @@
 
             if (passInput.type === 'password') {
                 passInput.type = 'text';
-                eyeOpen.classList.add('hidden'); // Hide open eye
-                eyeOff.classList.remove('hidden'); // Show closed eye
+                eyeOpen.classList.add('hidden'); 
+                eyeOff.classList.remove('hidden'); 
             } else {
                 passInput.type = 'password';
-                eyeOpen.classList.remove('hidden'); // Show open eye
-                eyeOff.classList.add('hidden'); // Hide closed eye
+                eyeOpen.classList.remove('hidden'); 
+                eyeOff.classList.add('hidden'); 
             }
         }
 
         // --- AUTO LOGOUT (5 Minutes) ---
-        const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+        const IDLE_TIMEOUT = 5 * 60 * 1000; 
         let idleTimer;
         function startIdleMonitor() { 
             window.addEventListener('mousemove', resetIdleTimer, true); 
@@ -230,14 +228,16 @@
         
         const logout = () => { clearTimeout(idleTimer); localStorage.removeItem('s'); location.reload(); };
 
-        // Load Data
+        // Load Data & Initialize Dropdowns
         async function init() {
             const d = await api('/api/getInitData');
             profiles = d.profiles || [];
             const opt = d.searchOptions || {}; 
             
+            // ১. নামের তালিকা (প্রোফাইল থেকে অটোমেটিক)
             names = [...new Set(profiles.map(p => p.name))].sort();
 
+            // ২. জমির ম্যাপ (প্রোফাইল থেকে অটোমেটিক)
             sMap = {};
             profiles.forEach(p => {
                 if (!sMap[p.name]) sMap[p.name] = new Set();
@@ -245,33 +245,42 @@
             });
             Object.keys(sMap).forEach(k => sMap[k] = [...sMap[k]]);
 
+            // ৩. সালের ম্যাপ (রেকর্ড থেকে আসবে)
             yMap = opt.yearMap || {};
             
+            // --- New Entry Dropdown Setup ---
             const ndd = document.getElementById('nameDD'); ndd.innerHTML = ''; 
             names.forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
             
+            // --- Search Dropdown Setup ---
             const sdd = document.getElementById('searchDD'); 
             sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`; 
             names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
 
+            // --- Update Active Search State ---
             const currentName = document.getElementById('searchNameVal').value;
             
             if (currentName !== 'ALL' && !names.includes(currentName)) {
+                // যদি প্রোফাইল ডিলিট হয়ে যায় তাহলে রিসেট
                 resetSearchDropdowns();
             } else if (currentName === 'ALL') {
+                // All Names থাকলে Land/Year রিসেট
                 const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>';
                 const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>';
             } else {
+                // নির্দিষ্ট নাম সিলেক্ট থাকলে Land/Year আপডেট করা
                 const lSel = document.getElementById('searchLand');
                 const currentLand = lSel.value;
                 lSel.innerHTML = '<option value="ALL">All Lands</option>';
                 if (sMap[currentName]) sMap[currentName].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`);
+                // যদি আগের সিলেক্ট করা ল্যান্ড নতুন ডাটায় না থাকে তাহলে ALL করে দিন
                 if (!sMap[currentName]?.includes(parseFloat(currentLand))) lSel.value = "ALL"; else lSel.value = currentLand;
 
                 const ySel = document.getElementById('searchYear');
                 const currentYear = ySel.value;
                 ySel.innerHTML = '<option value="ALL">All Years</option>';
                 if (yMap[currentName]) yMap[currentName].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`);
+                // যদি আগের সিলেক্ট করা সাল নতুন ডাটায় না থাকে তাহলে ALL করে দিন
                 if (!yMap[currentName]?.includes(currentYear)) ySel.value = "ALL"; else ySel.value = currentYear;
             }
 
@@ -286,20 +295,69 @@
         }
 
         // Entry Logic
-        const setEntryName = n => { document.getElementById('entryName').value = n; document.getElementById('nameDD').classList.add('hidden'); const m = profiles.filter(p => p.name === n); const lSel = document.getElementById('entryLand'); lSel.innerHTML = '<option value="">Select</option>'; m.forEach(p => lSel.innerHTML += `<option value="${p.land}">${p.land}</option>`); if (m.length === 1) { lSel.value = m[0].land; updateRate(); } };
-        const updateRate = () => { const n = document.getElementById('entryName').value, l = document.getElementById('entryLand').value; const p = profiles.find(x => x.name === n && x.land == l); if (p) { document.getElementById('entryRate').innerHTML = `<option value="${p.rate}">${p.rate}</option>`; document.getElementById('entryRate').value = p.rate; document.getElementById('entryHari').value = p.hariBorsho || "-"; } };
+        // নাম সিলেক্ট করলে প্রোফাইল থেকে জমি ও রেট অটো আসবে
+        const setEntryName = n => { 
+            document.getElementById('entryName').value = n; 
+            document.getElementById('nameDD').classList.add('hidden'); 
+            
+            // এই নামের সব প্রোফাইল খুঁজে বের করা
+            const m = profiles.filter(p => p.name === n); 
+            const lSel = document.getElementById('entryLand'); 
+            lSel.innerHTML = '<option value="">Select</option>'; 
+            
+            // জমির অপশন পূরণ করা
+            m.forEach(p => lSel.innerHTML += `<option value="${p.land}">${p.land}</option>`); 
+            
+            // যদি শুধু একটি প্রোফাইল থাকে তাহলে অটো সিলেক্ট করা
+            if (m.length === 1) { 
+                lSel.value = m[0].land; 
+                updateRate(); 
+            } 
+        };
+
+        // জমি সিলেক্ট করলে রেট অটো আসবে
+        const updateRate = () => { 
+            const n = document.getElementById('entryName').value, l = document.getElementById('entryLand').value; 
+            const p = profiles.find(x => x.name === n && x.land == l); 
+            
+            if (p) { 
+                document.getElementById('entryRate').innerHTML = `<option value="${p.rate}">${p.rate}</option>`; 
+                document.getElementById('entryRate').value = p.rate; 
+                document.getElementById('entryHari').value = p.hariBorsho || "-"; 
+            } else {
+                document.getElementById('entryRate').innerHTML = '<option value="">Select</option>'; 
+                document.getElementById('entryHari').value = "";
+            }
+        };
 
         document.getElementById('landForm').addEventListener('submit', async e => {
             e.preventDefault();
             const d = { name: document.getElementById('entryName').value, land: document.getElementById('entryLand').value, rate: document.getElementById('entryRate').value, tkGiven: toEnglishDigits(document.getElementById('entryTk').value), hariYear: toEnglishDigits(document.getElementById('entryYear').value), loggedInUser: user.name };
             if (!d.name || !d.land || !d.rate) return alert("Fill fields");
             const res = await api('/api/saveFormData', d);
-            if (res.success) { document.getElementById('msg').classList.remove('hidden'); e.target.reset(); setTimeout(() => document.getElementById('msg').classList.add('hidden'), 1500); init(); }
+            if (res.success) { 
+                document.getElementById('msg').classList.remove('hidden'); 
+                e.target.reset(); 
+                setTimeout(() => document.getElementById('msg').classList.add('hidden'), 1500); 
+                init(); // নতুন ডাটা সেভ হলে সার্চ ড্রপডাউন আপডেট হবে
+            }
             else alert("Error");
         });
 
         // Search Logic
-        const setSearchName = (v, t) => { document.getElementById('searchNameVal').value = v; document.getElementById('searchName').value = t; document.getElementById('searchDD').classList.add('hidden'); const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>'; if (v !== 'ALL' && sMap[v]) sMap[v].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`); const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>'; if (v !== 'ALL' && yMap[v]) yMap[v].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`); };
+        const setSearchName = (v, t) => { 
+            document.getElementById('searchNameVal').value = v; 
+            document.getElementById('searchName').value = t; 
+            document.getElementById('searchDD').classList.add('hidden'); 
+            
+            const lSel = document.getElementById('searchLand'); 
+            lSel.innerHTML = '<option value="ALL">All Lands</option>'; 
+            if (v !== 'ALL' && sMap[v]) sMap[v].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`); 
+            
+            const ySel = document.getElementById('searchYear'); 
+            ySel.innerHTML = '<option value="ALL">All Years</option>'; 
+            if (v !== 'ALL' && yMap[v]) yMap[v].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`); 
+        };
 
         // Due Logic
         const getDue = async () => {
@@ -355,7 +413,18 @@
             if (n === 'ALL' || y === 'ALL') return alert('Select specific name/year');
             if(confirm('Delete?')) {
                 const res = await api('/api/deleteRecords', { name: n, year: toEnglishDigits(y) });
-                if(res.success) { document.getElementById('resultArea').classList.add('hidden'); await init(); resetSearchDropdowns(); alert("Deleted successfully!"); }
+                if(res.success) { 
+                    document.getElementById('resultArea').classList.add('hidden'); 
+                    
+                    // ডিলিট সাকসেসফুল হলে:
+                    // ১. নতুন করে ডাটা লোড করা (init)
+                    await init(); 
+                    
+                    // ২. সার্চ ফিল্ড রিসেট করে দেওয়া (যাতে ডিলিট করা ডাটা ফিল্ডে না থাকে)
+                    resetSearchDropdowns(); 
+                    
+                    alert("Deleted successfully!"); 
+                }
                 else { alert("Error deleting data."); }
             }
         };
