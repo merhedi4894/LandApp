@@ -21,18 +21,30 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 15px; }
         .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #0ea5e9; max-height: 200px; overflow-y: auto; z-index: 50; border-radius: 0 0 8px 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         
-        /* Toast Notification Styles */
-        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; }
+        /* Toast Notification Styles - TOP Position */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; }
         .toast { padding: 12px 20px; border-radius: 8px; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.3s ease-out; }
         .toast.success { background-color: #10b981; }
         .toast.error { background-color: #ef4444; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body class="p-2 sm:p-4 md:p-6">
 
     <!-- Toast Container -->
     <div id="toast-container"></div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="confirmModal" class="hidden modal-overlay">
+        <div class="bg-white rounded-xl p-6 text-center max-w-sm shadow-2xl border-2 border-red-200">
+            <!-- Message in Red Color -->
+            <p id="confirmMessage" class="text-red-600 font-bold text-xl mb-6">Are you want to delete?</p>
+            <div class="flex justify-center gap-4">
+                <button onclick="executeConfirm()" class="btn btn-danger px-6 py-2 rounded-lg">Yes, Delete</button>
+                <button onclick="closeConfirm()" class="btn bg-gray-300 text-black px-6 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <!-- LOGIN -->
     <div id="loginSection" class="max-w-md mx-auto">
@@ -116,7 +128,6 @@
                         <button type="submit" id="saveEntryBtn" class="btn btn-primary w-full py-2 rounded-lg font-semibold" data-lang="save_btn">Save</button>
                     </div>
                 </form>
-                <!-- Old inline message removed, now using Toast -->
             </div>
 
             <!-- Search -->
@@ -194,10 +205,11 @@
         const toggleLang = () => { lang = lang === 'bn' ? 'en' : 'bn'; setLang(); };
 
         let user = null, profiles = [], names = [], sMap = {}, yMap = {};
+        let confirmCallback = null; // Variable to store delete action
         
         const toEnglishDigits = (str) => { if (!str) return str; const map = { '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4', '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9' }; return String(str).replace(/[০-৯]/g, d => map[d]); };
         
-        // --- TOAST NOTIFICATION SYSTEM ---
+        // --- TOAST NOTIFICATION SYSTEM (TOP) ---
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -205,11 +217,27 @@
             toast.innerText = message;
             container.appendChild(toast);
 
-            // Auto remove after 2 seconds
             setTimeout(() => {
                 toast.style.opacity = '0';
                 setTimeout(() => toast.remove(), 300);
             }, 2000);
+        }
+
+        // --- CUSTOM CONFIRM MODAL SYSTEM ---
+        function showConfirm(message, callback) {
+            document.getElementById('confirmMessage').innerText = message;
+            document.getElementById('confirmModal').classList.remove('hidden');
+            confirmCallback = callback;
+        }
+
+        function closeConfirm() {
+            document.getElementById('confirmModal').classList.add('hidden');
+            confirmCallback = null;
+        }
+
+        function executeConfirm() {
+            if (confirmCallback) confirmCallback();
+            closeConfirm();
         }
 
         function togglePassVisibility() {
@@ -256,17 +284,12 @@
 
         // Load Data
         async function init() {
-            // Clear UI immediately
             document.getElementById('nameDD').innerHTML = '';
             document.getElementById('searchDD').innerHTML = '';
             resetSearchDropdowns();
 
             const d = await api('/api/getInitData');
-            
-            // --- DEBUGGING: Check Console (F12) ---
-            // If you see "Mosto" here, the problem is in your Google Sheet or Backend Code.
-            console.log("Data from Server:", d); 
-            // ---------------------------------------
+            console.log("Server Data:", d); // Debug check
 
             profiles = d.profiles || [];
             const opt = d.searchOptions || {}; 
@@ -275,12 +298,12 @@
             sMap = opt.landMap || {}; 
             yMap = opt.yearMap || {}; 
             
-            // --- New Entry Dropdown (Profiles) ---
+            // New Entry Dropdown
             const ndd = document.getElementById('nameDD'); 
             const profileNames = [...new Set(profiles.map(p => p.name))].sort();
             profileNames.forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
             
-            // --- Search Dropdown (Records) ---
+            // Search Dropdown
             const sdd = document.getElementById('searchDD'); 
             sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`; 
             names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
@@ -320,7 +343,7 @@
             }
         };
 
-        // Save Entry with Toast
+        // Save Entry
         document.getElementById('landForm').addEventListener('submit', async e => {
             e.preventDefault();
             const btn = document.getElementById('saveEntryBtn');
@@ -353,20 +376,18 @@
             }
         });
 
-        // Search Logic: Auto-fill Land & Year
+        // Search Logic
         const setSearchName = (nameVal, displayName) => { 
             document.getElementById('searchNameVal').value = nameVal; 
             document.getElementById('searchName').value = displayName; 
             document.getElementById('searchDD').classList.add('hidden'); 
             
-            // 1. Update Land
             const lSel = document.getElementById('searchLand'); 
             lSel.innerHTML = '<option value="ALL">All Lands</option>'; 
             if (nameVal !== 'ALL' && sMap[nameVal]) {
                 sMap[nameVal].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`);
             }
 
-            // 2. Update Year
             const ySel = document.getElementById('searchYear'); 
             ySel.innerHTML = '<option value="ALL">All Years</option>'; 
             if (nameVal !== 'ALL' && yMap[nameVal]) {
@@ -422,11 +443,13 @@
             else d.records.forEach(r => tb.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 border">${r.date}</td><td class="p-2 border">${r.name}</td><td class="p-2 border text-center">${r.land}</td><td class="p-2 border text-center">${r.rate}</td><td class="p-2 border text-right">${r.total}</td><td class="p-2 border text-right">${r.given}</td><td class="p-2 border text-center">${r.hariYear || r.year}</td></tr>`);
         };
 
-        // Delete Logic with Toast
-        const delData = async () => {
+        // Delete Logic with Custom Modal
+        const delData = () => {
             const n = document.getElementById('searchNameVal').value; const y = document.getElementById('searchYear').value;
             if (n === 'ALL' || y === 'ALL') { showToast('Select specific name/year', 'error'); return; }
-            if(confirm('Are you sure to delete?')) {
+            
+            // Use custom modal instead of confirm()
+            showConfirm("Are you want to delete?", async () => {
                 const res = await api('/api/deleteRecords', { name: n, year: toEnglishDigits(y) });
                 if(res.success) { 
                     document.getElementById('resultArea').classList.add('hidden'); 
@@ -434,7 +457,7 @@
                     showToast("Deleted Successfully!", "success");
                 }
                 else { showToast("Error deleting data", "error"); }
-            }
+            });
         };
 
         // Settings Logic
@@ -456,11 +479,11 @@
             }
         };
 
-        const delP = async (n, l, r) => { 
-            if(confirm('Delete Profile?')) { 
+        const delP = (n, l, r) => { 
+            showConfirm("Delete this profile?", async () => { 
                 const res = await api('/api/deleteProfile', { name: n, land: l, rate: r }); 
                 if(res.success) { await init(); renderS_tbl(); showToast("Profile Deleted", "success"); } 
-            } 
+            });
         };
 
         // Listeners
