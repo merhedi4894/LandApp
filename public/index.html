@@ -118,6 +118,7 @@
                         <input type="hidden" id="searchNameVal" value="ALL">
                         <div id="searchDD" class="hidden dropdown-list"></div>
                     </div>
+                    <!-- Land এবং Year এখানে অটো আপডেট হবে -->
                     <select id="searchLand" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL" data-lang="all_lands">All Lands</option></select>
                     <select id="searchYear" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL" data-lang="all_years">All Years</option></select>
                     <div class="flex gap-2">
@@ -208,12 +209,10 @@
         }
         function resetIdleTimer() { clearTimeout(idleTimer); idleTimer = setTimeout(logout, IDLE_TIMEOUT); }
 
-        // API with Cache Busting
+        // API Call with Cache Busting
         const api = (url, data = {}) => {
-            // Timestamp prevents browser caching
             const separator = url.includes('?') ? '&' : '?';
             const cacheUrl = url + separator + 't=' + new Date().getTime();
-            
             return fetch(cacheUrl, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
@@ -233,43 +232,30 @@
 
         // Load Data
         async function init() {
-            // 1. Clear UI Immediately
+            // Clear previous data immediately
             document.getElementById('nameDD').innerHTML = '';
             document.getElementById('searchDD').innerHTML = '';
             resetSearchDropdowns();
 
             const d = await api('/api/getInitData');
             
+            // --- DEBUGGING: Check Console (F12) to see what server returns ---
+            console.log("Server Data Received:", d);
+            // ------------------------------------------------------------------
+
             profiles = d.profiles || [];
             const opt = d.searchOptions || {}; 
             
-            // 2. Load Raw Data
-            let rawNames = opt.names || []; 
-            let rawSMap = opt.landMap || {}; 
-            let rawYMap = opt.yearMap || {}; 
-
-            // 3. FILTER LOGIC: Only keep names that have valid Land or Year data
-            // This removes "Ghost" entries like "Mosto" that might exist in the sheet but have no data
-            names = rawNames.filter(name => {
-                const hasLands = rawSMap[name] && rawSMap[name].length > 0;
-                const hasYears = rawYMap[name] && rawYMap[name].length > 0;
-                return hasLands || hasYears;
-            });
-
-            // Filter Maps to match the filtered names
-            sMap = {};
-            yMap = {};
-            names.forEach(n => {
-                sMap[n] = rawSMap[n] || [];
-                yMap[n] = rawYMap[n] || [];
-            });
+            names = opt.names || []; 
+            sMap = opt.landMap || {}; 
+            yMap = opt.yearMap || {}; 
             
-            // --- New Entry Dropdown (Profiles) ---
+            // --- New Entry Dropdown (From Profiles) ---
             const ndd = document.getElementById('nameDD'); 
             const profileNames = [...new Set(profiles.map(p => p.name))].sort();
             profileNames.forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
             
-            // --- Search Dropdown (Records Only) ---
+            // --- Search Dropdown (From Records) ---
             const sdd = document.getElementById('searchDD'); 
             sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`; 
             names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
@@ -338,22 +324,28 @@
                 setTimeout(() => document.getElementById('msg').classList.add('hidden'), 1500); 
                 init(); 
             }
-            else alert("Error");
+            else alert("Error saving data.");
         });
 
-        // Search Logic
-        const setSearchName = (v, t) => { 
-            document.getElementById('searchNameVal').value = v; 
-            document.getElementById('searchName').value = t; 
+        // Search Logic: Auto-fill Land & Year based on Name
+        const setSearchName = (nameVal, displayName) => { 
+            document.getElementById('searchNameVal').value = nameVal; 
+            document.getElementById('searchName').value = displayName; 
             document.getElementById('searchDD').classList.add('hidden'); 
             
+            // 1. Update Land Dropdown based on Name
             const lSel = document.getElementById('searchLand'); 
             lSel.innerHTML = '<option value="ALL">All Lands</option>'; 
-            if (v !== 'ALL' && sMap[v]) sMap[v].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`); 
-            
+            if (nameVal !== 'ALL' && sMap[nameVal]) {
+                sMap[nameVal].forEach(l => lSel.innerHTML += `<option value="${l}">${l}</option>`);
+            }
+
+            // 2. Update Year Dropdown based on Name
             const ySel = document.getElementById('searchYear'); 
             ySel.innerHTML = '<option value="ALL">All Years</option>'; 
-            if (v !== 'ALL' && yMap[v]) yMap[v].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`); 
+            if (nameVal !== 'ALL' && yMap[nameVal]) {
+                yMap[nameVal].forEach(y => ySel.innerHTML += `<option value="${y}">${y}</option>`);
+            }
         };
 
         // Due Logic
@@ -412,8 +404,7 @@
                 const res = await api('/api/deleteRecords', { name: n, year: toEnglishDigits(y) });
                 if(res.success) { 
                     document.getElementById('resultArea').classList.add('hidden'); 
-                    await init(); // Refresh Data
-                    resetSearchDropdowns(); // Clear Fields
+                    await init(); 
                     alert("Deleted successfully!"); 
                 }
                 else { alert("Error deleting data."); }
