@@ -33,7 +33,15 @@
             <h2 class="text-2xl font-bold text-primary mb-6" data-lang="login_title">Login</h2>
             <form id="loginForm">
                 <input type="text" id="username" value="mehedi4894" class="input-field w-full px-4 py-3 rounded-lg mb-4 bg-gray-100 font-semibold" required>
-                <input type="password" id="password" placeholder="Password" class="input-field w-full px-4 py-3 rounded-lg mb-4" required>
+                
+                <!-- Password Field with View Button -->
+                <div class="relative mb-4">
+                    <input type="password" id="password" placeholder="Password" class="input-field w-full px-4 py-3 rounded-lg pr-16" required>
+                    <button type="button" onclick="togglePassVisibility()" id="passToggleBtn" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold py-1 px-2 rounded transition">
+                        Show
+                    </button>
+                </div>
+
                 <div id="loginError" class="hidden text-red-500 text-sm mb-3"></div>
                 <button type="submit" class="btn btn-primary w-full py-3 rounded-lg font-semibold" data-lang="login_btn">Login</button>
             </form>
@@ -99,12 +107,10 @@
                 <h3 class="font-bold text-primary mb-3" data-lang="search_title">Search</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3">
                     <div class="relative">
-                        <!-- এখানে কোনো ভ্যালু ডিফল্ট দেওয়া নেই -->
                         <input type="text" id="searchName" placeholder="Name" class="input-field w-full px-3 py-2 rounded-lg bg-white" autocomplete="off">
                         <input type="hidden" id="searchNameVal" value="ALL">
                         <div id="searchDD" class="hidden dropdown-list"></div>
                     </div>
-                    <!-- ডিফল্ট অপশন ছাড়া কিছু নেই -->
                     <select id="searchLand" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL" data-lang="all_lands">All Lands</option></select>
                     <select id="searchYear" class="input-field px-3 py-2 rounded-lg bg-white"><option value="ALL" data-lang="all_years">All Years</option></select>
                     <div class="flex gap-2">
@@ -174,9 +180,30 @@
         
         const toEnglishDigits = (str) => { if (!str) return str; const map = { '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4', '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9' }; return String(str).replace(/[০-৯]/g, d => map[d]); };
         
-        // --- AUTO LOGOUT (10 Min) ---
-        const IDLE_TIMEOUT = 10 * 60 * 1000; let idleTimer;
-        function startIdleMonitor() { window.addEventListener('mousemove', resetIdleTimer, true); window.addEventListener('mousedown', resetIdleTimer, true); window.addEventListener('keypress', resetIdleTimer, true); window.addEventListener('touchmove', resetIdleTimer, true); window.addEventListener('scroll', resetIdleTimer, true); resetIdleTimer(); }
+        // --- PASSWORD VISIBILITY TOGGLE ---
+        function togglePassVisibility() {
+            const passInput = document.getElementById('password');
+            const toggleBtn = document.getElementById('passToggleBtn');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                toggleBtn.innerText = 'Hide';
+            } else {
+                passInput.type = 'password';
+                toggleBtn.innerText = 'Show';
+            }
+        }
+
+        // --- AUTO LOGOUT (5 Minutes) ---
+        const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+        let idleTimer;
+        function startIdleMonitor() { 
+            window.addEventListener('mousemove', resetIdleTimer, true); 
+            window.addEventListener('mousedown', resetIdleTimer, true); 
+            window.addEventListener('keypress', resetIdleTimer, true); 
+            window.addEventListener('touchmove', resetIdleTimer, true); 
+            window.addEventListener('scroll', resetIdleTimer, true); 
+            resetIdleTimer(); 
+        }
         function resetIdleTimer() { clearTimeout(idleTimer); idleTimer = setTimeout(logout, IDLE_TIMEOUT); }
 
         const api = (url, data = {}) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(r => r.json());
@@ -197,33 +224,24 @@
             profiles = d.profiles || [];
             const opt = d.searchOptions || {}; 
             
-            // --- ডাইনামিক ডাটা জেনারেশন (হার্ডকোডেড ভ্যালু বাদ) ---
-            
-            // ১. নামের তালিকা তৈরি (প্রোফাইল থেকে অটোমেটিক)
             names = [...new Set(profiles.map(p => p.name))].sort();
 
-            // ২. নাম অনুযায়ী জমির ম্যাপ (sMap) তৈরি
             sMap = {};
             profiles.forEach(p => {
                 if (!sMap[p.name]) sMap[p.name] = new Set();
                 sMap[p.name].add(p.land);
             });
-            // Set কে Array তে রূপান্তর
             Object.keys(sMap).forEach(k => sMap[k] = [...sMap[k]]);
 
-            // ৩. সালের ম্যাপ (yMap) সার্ভার থেকে আসবে (কারণ এটি ট্রানজেকশনের উপর নির্ভরশীল)
             yMap = opt.yearMap || {};
             
-            // Entry Dropdown (নতুন এন্ট্রির জন্য)
             const ndd = document.getElementById('nameDD'); ndd.innerHTML = ''; 
             names.forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
             
-            // Search Dropdown List (সার্চের জন্য)
             const sdd = document.getElementById('searchDD'); 
             sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`; 
             names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
 
-            // সার্চ ফিল্ড রিফ্রেশ লজিক
             const currentName = document.getElementById('searchNameVal').value;
             
             if (currentName !== 'ALL' && !names.includes(currentName)) {
@@ -232,7 +250,6 @@
                 const lSel = document.getElementById('searchLand'); lSel.innerHTML = '<option value="ALL">All Lands</option>';
                 const ySel = document.getElementById('searchYear'); ySel.innerHTML = '<option value="ALL">All Years</option>';
             } else {
-                // নির্দিষ্ট নাম সিলেক্ট করা থাকলে জমি ও বছর আপডেট
                 const lSel = document.getElementById('searchLand');
                 const currentLand = lSel.value;
                 lSel.innerHTML = '<option value="ALL">All Lands</option>';
