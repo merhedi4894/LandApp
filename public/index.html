@@ -210,7 +210,7 @@
 
         // API with Cache Busting
         const api = (url, data = {}) => {
-            // Add timestamp to URL to prevent browser caching
+            // Timestamp prevents browser caching
             const separator = url.includes('?') ? '&' : '?';
             const cacheUrl = url + separator + 't=' + new Date().getTime();
             
@@ -233,30 +233,46 @@
 
         // Load Data
         async function init() {
-            // Clear dropdowns immediately before fetching
+            // 1. Clear UI Immediately
             document.getElementById('nameDD').innerHTML = '';
             document.getElementById('searchDD').innerHTML = '';
-            
+            resetSearchDropdowns();
+
             const d = await api('/api/getInitData');
             
             profiles = d.profiles || [];
             const opt = d.searchOptions || {}; 
             
-            names = opt.names || []; 
-            sMap = opt.landMap || {}; 
-            yMap = opt.yearMap || {}; 
+            // 2. Load Raw Data
+            let rawNames = opt.names || []; 
+            let rawSMap = opt.landMap || {}; 
+            let rawYMap = opt.yearMap || {}; 
+
+            // 3. FILTER LOGIC: Only keep names that have valid Land or Year data
+            // This removes "Ghost" entries like "Mosto" that might exist in the sheet but have no data
+            names = rawNames.filter(name => {
+                const hasLands = rawSMap[name] && rawSMap[name].length > 0;
+                const hasYears = rawYMap[name] && rawYMap[name].length > 0;
+                return hasLands || hasYears;
+            });
+
+            // Filter Maps to match the filtered names
+            sMap = {};
+            yMap = {};
+            names.forEach(n => {
+                sMap[n] = rawSMap[n] || [];
+                yMap[n] = rawYMap[n] || [];
+            });
             
-            // --- New Entry Dropdown ---
+            // --- New Entry Dropdown (Profiles) ---
             const ndd = document.getElementById('nameDD'); 
             const profileNames = [...new Set(profiles.map(p => p.name))].sort();
             profileNames.forEach(n => ndd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer border-b" onclick="setEntryName('${n}')">${n}</div>`);
             
-            // --- Search Dropdown ---
+            // --- Search Dropdown (Records Only) ---
             const sdd = document.getElementById('searchDD'); 
             sdd.innerHTML = `<div class="p-2 hover:bg-gray-100 cursor-pointer font-bold text-blue-600" onclick="setSearchName('ALL', 'All Names')">All Names</div>`; 
             names.forEach(n => sdd.innerHTML += `<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="setSearchName('${n}', '${n}')">${n}</div>`);
-
-            resetSearchDropdowns();
 
             if (!document.getElementById('settingsModal').classList.contains('hidden')) renderS_tbl(); 
             setLang();
@@ -299,7 +315,6 @@
             const btn = document.getElementById('saveEntryBtn');
             const originalText = btn.innerText;
             
-            // Show loading
             btn.innerText = "Saving...";
             btn.disabled = true;
 
@@ -314,7 +329,6 @@
 
             const res = await api('/api/saveFormData', d);
             
-            // Reset button
             btn.innerText = originalText;
             btn.disabled = false;
 
@@ -398,8 +412,8 @@
                 const res = await api('/api/deleteRecords', { name: n, year: toEnglishDigits(y) });
                 if(res.success) { 
                     document.getElementById('resultArea').classList.add('hidden'); 
-                    await init(); 
-                    resetSearchDropdowns(); 
+                    await init(); // Refresh Data
+                    resetSearchDropdowns(); // Clear Fields
                     alert("Deleted successfully!"); 
                 }
                 else { alert("Error deleting data."); }
